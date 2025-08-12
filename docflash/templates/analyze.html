@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyze Documents - Doc Flash</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* ChatGPT-style Theme System */
+        :root {
+            /* Light theme colors (ChatGPT style) */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f7f7f8;
+            --bg-tertiary: #ececf1;
+            --text-primary: #0d0d0d;
+            --text-secondary: #676767;
+            --text-tertiary: #8e8ea0;
+            --border-light: #e5e5e5;
+            --border-medium: #c5c5d2;
+            --accent-green: #10a37f;
+            --accent-green-hover: #0d8a6b;
+            --accent-blue: #1976d2;
+            --accent-red: #e53e3e;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-medium: rgba(0, 0, 0, 0.15);
+        }
+
+        [data-theme="dark"] {
+            /* Dark theme colors (ChatGPT style) */
+            --bg-primary: #212121;
+            --bg-secondary: #2f2f2f;
+            --bg-tertiary: #404040;
+            --text-primary: #ececec;
+            --text-secondary: #c5c5c5;
+            --text-tertiary: #8e8ea0;
+            --border-light: #4d4d4f;
+            --border-medium: #565869;
+            --accent-green: #10a37f;
+            --accent-green-hover: #0d8a6b;
+            --accent-blue: #4285f4;
+            --accent-red: #f56565;
+            --shadow-light: rgba(0, 0, 0, 0.3);
+            --shadow-medium: rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .navbar {
+            background-color: var(--bg-primary);
+            border-bottom: 1px solid var(--border-light);
+            box-shadow: 0 1px 3px var(--shadow-light);
+        }
+
+        .navbar-brand {
+            color: var(--text-primary) !important;
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+
+        .nav-link {
+            color: var(--text-secondary) !important;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-primary) !important;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border-light);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .breadcrumb {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .breadcrumb-item a {
+            color: var(--accent-green);
+            text-decoration: none;
+        }
+
+        .breadcrumb-item.active {
+            color: var(--text-secondary);
+        }
+
+        .card {
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px var(--shadow-light);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .card-header {
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-light);
+            border-radius: 12px 12px 0 0 !important;
+            padding: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .card-body {
+            color: var(--text-primary);
+        }
+
+        .template-card {
+            border: 2px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .template-card:hover {
+            border-color: var(--accent-green);
+            box-shadow: 0 4px 12px var(--shadow-medium);
+            transform: translateY(-2px);
+        }
+
+        .template-card.selected {
+            border-color: var(--accent-green);
+            background: var(--bg-tertiary);
+            box-shadow: 0 4px 12px rgba(16, 163, 127, 0.15);
+        }
+
+        .template-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .pdf-upload-zone {
+            border: 2px dashed var(--accent-blue);
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .pdf-upload-zone:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .pdf-upload-zone.dragover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-blue);
+            transform: scale(1.02);
+        }
+
+        .scratchpad {
+            border: 2px dashed var(--border-light);
+            border-radius: 12px;
+            background: var(--bg-primary);
+            transition: all 0.3s ease;
+        }
+
+        .scratchpad.has-content {
+            border-color: var(--accent-green);
+            background: var(--bg-primary);
+            box-shadow: 0 4px 12px rgba(16, 163, 127, 0.1);
+        }
+
+        .extraction-result {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-left: 4px solid var(--accent-green);
+            border: 1px solid var(--border-light);
+            color: var(--text-primary);
+        }
+
+        .json-output {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 0.875rem;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 1px 3px var(--shadow-light);
+        }
+
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            margin: 0 5px;
+            position: relative;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .step:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .step.active {
+            background: var(--accent-green);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 163, 127, 0.3);
+        }
+
+        .step.completed {
+            background: var(--accent-green);
+            color: white;
+            border-color: var(--accent-green);
+        }
+
+        .loading-spinner {
+            display: none;
+        }
+
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-light);
+        }
+
+        .btn-primary {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-green-hover);
+            border-color: var(--accent-green-hover);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: var(--accent-green-hover);
+            border-color: var(--accent-green-hover);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            border-color: var(--border-medium);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
+            border-color: var(--border-medium);
+            color: var(--text-primary);
+        }
+
+        .btn-outline-primary {
+            color: var(--accent-green);
+            border-color: var(--accent-green);
+            background: transparent;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        .btn-outline-secondary {
+            color: var(--text-secondary);
+            border-color: var(--border-medium);
+            background: transparent;
+        }
+
+        .btn-outline-secondary:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--border-medium);
+            color: var(--text-primary);
+        }
+
+        .btn-outline-success {
+            color: var(--accent-green);
+            border-color: var(--accent-green);
+            background: transparent;
+        }
+
+        .btn-outline-success:hover {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        .btn-outline-info {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            background: transparent;
+        }
+
+        .btn-outline-info:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            transition: all 0.2s ease;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.1);
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .text-muted {
+            color: var(--text-secondary) !important;
+        }
+
+        .alert {
+            border: none;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-green);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .alert-info {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-left-color: var(--accent-blue);
+        }
+
+        .alert-success {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-left-color: var(--accent-green);
+        }
+
+        .alert-warning {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-left-color: #f59e0b;
+        }
+
+        .alert-danger {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-left-color: var(--accent-red);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-bolt me-2" style="color: #fbbf24;"></i> Doc Flash
+            </a>
+            <div class="navbar-nav ms-auto d-flex align-items-center">
+                <button class="theme-toggle me-3" onclick="toggleTheme()" title="Toggle theme">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                </button>
+                <a class="nav-link" href="/">Home</a>
+                <a class="nav-link" href="/configure">Configure</a>
+                <a class="nav-link active" href="/analyze">Analyze</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        <!-- Breadcrumb Navigation -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="/"><i class="fas fa-home me-1"></i>Home</a></li>
+                <li class="breadcrumb-item active">Analyze Documents</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="container-fluid mt-4">
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step active" id="step1-indicator">
+                <i class="fas fa-layer-group mb-2"></i>
+                <div>1. Select Template</div>
+            </div>
+            <div class="step" id="step2-indicator">
+                <i class="fas fa-upload mb-2"></i>
+                <div>2. Upload Document</div>
+            </div>
+            <div class="step" id="step3-indicator">
+                <i class="fas fa-cogs mb-2"></i>
+                <div>3. Process & Extract</div>
+            </div>
+            <div class="step" id="step4-indicator">
+                <i class="fas fa-download mb-2"></i>
+                <div>4. Download Results</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- Step 1: Template Selection -->
+                <div id="step1" class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="fas fa-layer-group me-2"></i> Step 1: Select Document Template</h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-4">Choose a registered template that matches your document type.</p>
+                        
+                        <div id="templatesContainer">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading templates...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Loading registered templates...</p>
+                            </div>
+                        </div>
+
+                        <div class="text-end mt-4">
+                            <button class="btn btn-primary btn-lg" onclick="selectTemplate()" disabled id="selectTemplateBtn">
+                                <i class="fas fa-arrow-right me-2"></i> Use Selected Template
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Document Upload -->
+                <div id="step2" class="card mb-4" style="display: none;">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="fas fa-upload me-2"></i> Step 2: Upload Document</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info border-0 shadow-sm">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Selected Template:</strong> <span id="selectedTemplateName">None</span>
+                        </div>
+
+                        <div class="pdf-upload-zone" id="pdfUploadZone" onclick="document.getElementById('pdfFileInput').click()">
+                            <input type="file" id="pdfFileInput" accept=".pdf" style="display: none;" onchange="handlePdfUpload(this)">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                            <h5 class="mb-2">Click to upload PDF or drag and drop</h5>
+                            <p class="text-muted mb-0">Upload a document to analyze using your selected template</p>
+                        </div>
+                        <div id="pdfUploadStatus" class="mt-3"></div>
+
+                        <div class="text-end mt-4">
+                            <button class="btn btn-success btn-lg" onclick="processDocument()" disabled id="processBtn">
+                                <i class="fas fa-cogs me-2"></i> Process Document
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Processing -->
+                <div id="step3" class="card mb-4" style="display: none;">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="fas fa-cogs me-2"></i> Step 3: Processing Document</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="loading-spinner text-center" id="loadingProcessing">
+                            <div class="spinner-border text-success mb-3" role="status">
+                                <span class="visually-hidden">Processing document...</span>
+                            </div>
+                            <h5>Analyzing Document</h5>
+                            <p class="text-muted">Using AI to extract structured data...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Results -->
+                <div id="step4" class="card mb-4" style="display: none;">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="fas fa-chart-bar me-2"></i> Step 4: Extraction Results</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success border-0 shadow-sm">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>Analysis Complete!</strong> <span id="resultsMessage">Document processed successfully.</span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Raw Extractions:</h5>
+                                <div id="rawExtractions"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Structured Output:</h5>
+                                <div id="structuredOutput" class="json-output"></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <h5>Download Results:</h5>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-primary" onclick="downloadFile('visualization')">
+                                    <i class="fas fa-eye me-1"></i> Visualization HTML
+                                </button>
+                                <button class="btn btn-outline-success" onclick="downloadFile('extractions')">
+                                    <i class="fas fa-file-code me-1"></i> Raw Extractions (JSONL)
+                                </button>
+                                <button class="btn btn-outline-info" onclick="downloadFile('schema')">
+                                    <i class="fas fa-file-export me-1"></i> Structured JSON
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="text-end mt-4">
+                            <button class="btn btn-secondary me-2" onclick="resetAnalysis()">
+                                <i class="fas fa-redo me-1"></i> Analyze Another
+                            </button>
+                            <button class="btn btn-primary" onclick="window.location.href='/'">
+                                <i class="fas fa-home me-1"></i> Back to Home
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document Preview Sidebar -->
+            <div class="col-lg-4">
+                <div class="scratchpad" id="scratchpadContainer">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0"><i class="fas fa-file-text me-2"></i> Document Preview</h6>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="clearPreview()" title="Clear preview">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body p-3">
+                            <textarea class="form-control border-0 h-100" id="documentPreview" rows="25" placeholder="Document content will appear here after upload..." readonly style="resize: none; min-height: 500px;"></textarea>
+                        </div>
+                        <div class="card-footer">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <span id="previewCharCount">0</span> characters
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="statusMessages" class="mt-4"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentStep = 1;
+        let selectedTemplate = null;
+        let documentContent = '';
+        let currentSessionId = null;
+
+        // Theme management
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('theme-icon');
+            icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        // Load templates on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTheme();
+            loadTemplates();
+            initializeDragDrop();
+        });
+
+        // Template management
+        async function loadTemplates() {
+            try {
+                const response = await fetch('/list_templates');
+                const result = await response.json();
+                
+                if (result.success && result.templates) {
+                    displayTemplates(result.templates);
+                } else {
+                    displayNoTemplates();
+                }
+            } catch (error) {
+                console.error('Error loading templates:', error);
+                displayNoTemplates();
+            }
+        }
+
+        function displayTemplates(templates) {
+            const container = document.getElementById('templatesContainer');
+            
+            if (templates.length === 0) {
+                displayNoTemplates();
+                return;
+            }
+
+            const templateIcons = [
+                { class: 'fas fa-file-contract', color: '#3b82f6', bg: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' },
+                { class: 'fas fa-receipt', color: '#f59e0b', bg: 'linear-gradient(135deg, #f59e0b, #d97706)' },
+                { class: 'fas fa-file-medical', color: '#10b981', bg: 'linear-gradient(135deg, #10b981, #059669)' },
+                { class: 'fas fa-file-invoice', color: '#8b5cf6', bg: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' },
+                { class: 'fas fa-certificate', color: '#ef4444', bg: 'linear-gradient(135deg, #ef4444, #dc2626)' }
+            ];
+
+            container.innerHTML = templates.map((template, index) => {
+                const icon = templateIcons[index % templateIcons.length];
+                const lastUsed = template.last_used ? 
+                    new Date(template.last_used).toLocaleDateString() : 
+                    'Never used';
+                
+                return `
+                    <div class="col-md-6 mb-3">
+                        <div class="template-card" onclick="selectTemplateCard('${template.document_class}', this)" data-template="${template.document_class}">
+                            <div class="template-icon" style="background: ${icon.bg};">
+                                <i class="${icon.class}"></i>
+                            </div>
+                            <h5 class="mb-2">${template.document_class}</h5>
+                            <p class="text-muted mb-2">${template.extraction_schema.length} extraction attributes</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">Used ${template.usage_count} times</small>
+                                <small class="text-muted">${lastUsed}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Wrap in row
+            container.innerHTML = `<div class="row">${container.innerHTML}</div>`;
+        }
+
+        function displayNoTemplates() {
+            const container = document.getElementById('templatesContainer');
+            container.innerHTML = `
+                <div class="text-center py-5 text-muted">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <h5>No Templates Available</h5>
+                    <p>You need to create and register templates before you can analyze documents.</p>
+                    <a href="/configure" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i> Create Your First Template
+                    </a>
+                </div>
+            `;
+        }
+
+        function selectTemplateCard(templateName, cardElement) {
+            // Remove selection from all cards
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Select this card
+            cardElement.classList.add('selected');
+            selectedTemplate = templateName;
+            
+            // Enable the button
+            document.getElementById('selectTemplateBtn').disabled = false;
+        }
+
+        async function selectTemplate() {
+            if (!selectedTemplate) {
+                showStatus('Please select a template first.', 'warning');
+                return;
+            }
+            
+            document.getElementById('selectedTemplateName').textContent = selectedTemplate;
+            
+            // Load template details and show schema
+            try {
+                console.log('🔧 [DEBUG] Loading template details for:', selectedTemplate);
+                const response = await fetch(`/api/template/${selectedTemplate}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('🔧 [DEBUG] Template loaded:', result.template);
+                    displayTemplateSchema(result.template);
+                    showStep(2);
+                } else {
+                    showStatus(`Failed to load template: ${result.error}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading template:', error);
+                showStatus(`Error loading template: ${error.message}`, 'danger');
+            }
+        }
+
+        function displayTemplateSchema(template) {
+            console.log('🔧 [DEBUG] Displaying template schema');
+            // Create schema display area if it doesn't exist
+            let schemaContainer = document.getElementById('templateSchemaContainer');
+            if (!schemaContainer) {
+                // Add schema container after template selection
+                const templateInfoDiv = document.querySelector('[data-step="2"] .card');
+                if (templateInfoDiv) {
+                    const schemaHtml = `
+                        <div id="templateSchemaContainer" class="mt-3">
+                            <h6><i class="fas fa-list me-2"></i>Template Schema</h6>
+                            <div id="templateSchemaList" class="bg-light p-3 rounded">
+                                <!-- Schema will be populated here -->
+                            </div>
+                        </div>
+                    `;
+                    templateInfoDiv.insertAdjacentHTML('beforeend', schemaHtml);
+                    schemaContainer = document.getElementById('templateSchemaContainer');
+                }
+            }
+            
+            // Populate schema
+            const schemaList = document.getElementById('templateSchemaList');
+            if (schemaList && template.extraction_schema) {
+                const schemaHtml = template.extraction_schema.map(attr => `
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <div>
+                            <strong>${attr.attribute}</strong>
+                            <br><small class="text-muted">${attr.description}</small>
+                        </div>
+                        <span class="badge bg-primary">${attr.mode || 'extract'}</span>
+                    </div>
+                `).join('');
+                
+                schemaList.innerHTML = schemaHtml;
+                console.log('🔧 [DEBUG] Schema displayed:', template.extraction_schema.length, 'attributes');
+            }
+        }
+
+        // Task polling functionality for analyze page
+        async function pollTaskStatusAnalyze(taskId, statusDiv) {
+            const maxAttempts = 60; // 5 minutes max (5 second intervals)
+            let attempts = 0;
+            
+            const poll = async () => {
+                try {
+                    const response = await fetch(`/api/task_status/${taskId}`);
+                    const task = await response.json();
+                    
+                    // Update progress bar if progress is available
+                    const progressBar = document.getElementById('ocrProgressAnalyze');
+                    const progressText = document.getElementById('ocrProgressTextAnalyze');
+                    if (progressBar && task.progress !== undefined) {
+                        const roundedProgress = Math.round(task.progress);
+                        progressBar.style.width = `${roundedProgress}%`;
+                        progressBar.setAttribute('aria-valuenow', roundedProgress);
+                        
+                        // Update progress text if available
+                        if (progressText) {
+                            if (roundedProgress === 0) {
+                                progressText.textContent = 'Processing PDF with OCR...';
+                            } else if (roundedProgress === 100) {
+                                progressText.textContent = 'OCR processing completed!';
+                            } else {
+                                progressText.textContent = `Processing pages... ${roundedProgress}%`;
+                            }
+                        }
+                    }
+                    
+                    if (task.status === 'completed') {
+                        // Ensure progress is 100%
+                        if (progressBar) {
+                            progressBar.style.width = '100%';
+                            progressBar.setAttribute('aria-valuenow', 100);
+                        }
+                        
+                        // Load content into document preview
+                        documentContent = task.result;
+                        document.getElementById('documentPreview').value = documentContent;
+                        updatePreviewCounter();
+                        
+                        // Show success message
+                        statusDiv.innerHTML = `
+                            <div class="alert alert-success border-0 shadow-sm">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>PDF processed successfully!</strong>
+                            </div>
+                        `;
+                        
+                        document.getElementById('processBtn').disabled = false;
+                        showStatus('PDF uploaded and processed successfully!', 'success');
+                        return;
+                        
+                    } else if (task.status === 'failed') {
+                        statusDiv.innerHTML = `
+                            <div class="alert alert-danger border-0 shadow-sm">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                <strong>OCR processing failed:</strong> ${task.error || 'Unknown error'}
+                            </div>
+                        `;
+                        showStatus(`OCR processing failed: ${task.error || 'Unknown error'}`, 'danger');
+                        return;
+                        
+                    } else if (task.status === 'processing') {
+                        // Update progress if available
+                        const progressBar = document.getElementById('ocrProgressAnalyze');
+                        if (progressBar && task.progress) {
+                            progressBar.style.width = `${task.progress}%`;
+                        }
+                        
+                        // Continue polling
+                        attempts++;
+                        if (attempts < maxAttempts) {
+                            setTimeout(poll, 5000); // Poll every 5 seconds
+                        } else {
+                            statusDiv.innerHTML = `
+                                <div class="alert alert-warning border-0 shadow-sm">
+                                    <i class="fas fa-clock me-2"></i>
+                                    <strong>Processing timeout.</strong> Please try again or check if the file is too large.
+                                </div>
+                            `;
+                            showStatus('Processing timeout. Please try again.', 'warning');
+                        }
+                    }
+                    
+                } catch (error) {
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-danger border-0 shadow-sm">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <strong>Error checking task status:</strong> ${error.message}
+                        </div>
+                    `;
+                    showStatus(`Error checking task status: ${error.message}`, 'danger');
+                }
+            };
+            
+            // Start polling after a short delay
+            setTimeout(poll, 2000);
+        }
+
+        // PDF Upload functionality
+        async function handlePdfUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                showStatus('Please select a PDF file.', 'warning');
+                return;
+            }
+
+            const statusDiv = document.getElementById('pdfUploadStatus');
+            statusDiv.innerHTML = `
+                <div class="alert alert-info border-0 shadow-sm">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm me-3" role="status"></div>
+                        <div>
+                            <strong>Processing PDF: ${file.name}</strong>
+                            <br><small class="text-muted">Converting to text using OCR...</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const formData = new FormData();
+            formData.append('pdf_file', file);
+
+            try {
+                const response = await fetch('/upload_pdf', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Show immediate feedback that upload started
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-info border-0 shadow-sm">
+                            <i class="fas fa-upload me-2"></i>
+                            <strong>${result.message}</strong>
+                            <div class="progress mt-2" style="height: 8px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 0%" id="ocrProgressAnalyze" 
+                                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+                            </div>
+                            <small class="text-muted" id="ocrProgressTextAnalyze">Processing PDF with OCR...</small>
+                        </div>
+                    `;
+                    
+                    showStatus(result.message, 'info');
+                    
+                    // Start polling for task completion
+                    pollTaskStatusAnalyze(result.task_id, statusDiv);
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-danger border-0 shadow-sm">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <strong>Error:</strong> ${result.message || result.detail}
+                        </div>
+                    `;
+                    showStatus(`PDF processing failed: ${result.error || result.detail}`, 'danger');
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="alert alert-danger border-0 shadow-sm">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>Error uploading PDF:</strong> ${error.message}
+                    </div>
+                `;
+                showStatus(`Error uploading PDF: ${error.message}`, 'danger');
+            }
+
+            input.value = '';
+        }
+
+        // Document processing
+        async function processDocument() {
+            if (!selectedTemplate || !documentContent) {
+                showStatus('Please select a template and upload a document first.', 'warning');
+                return;
+            }
+
+            showStep(3);
+            document.getElementById('loadingProcessing').style.display = 'block';
+
+            try {
+                const response = await fetch('/analyze_document', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        document_class: selectedTemplate,
+                        input_text: documentContent
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentSessionId = result.session_id;
+                    
+                    // Display results
+                    document.getElementById('resultsMessage').textContent = result.message;
+                    
+                    // Display raw extractions
+                    const rawDiv = document.getElementById('rawExtractions');
+                    rawDiv.innerHTML = '';
+                    result.extractions.forEach(ext => {
+                        const extDiv = document.createElement('div');
+                        extDiv.className = 'extraction-result';
+                        extDiv.innerHTML = `
+                            <strong>${ext.extraction_class}:</strong> ${ext.extraction_text}
+                            <br><small class="text-muted">Position: ${ext.char_position}</small>
+                        `;
+                        rawDiv.appendChild(extDiv);
+                    });
+                    
+                    // Display structured output
+                    document.getElementById('structuredOutput').textContent = JSON.stringify(result.final_output, null, 2);
+                    
+                    document.getElementById('loadingProcessing').style.display = 'none';
+                    showStep(4);
+                    showStatus(result.message, 'success');
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                document.getElementById('loadingProcessing').style.display = 'none';
+                showStatus(`Error processing document: ${error.message}`, 'danger');
+                showStep(2); // Go back to upload step
+            }
+        }
+
+        // Utility functions
+        function updatePreviewCounter() {
+            const text = document.getElementById('documentPreview').value;
+            document.getElementById('previewCharCount').textContent = text.length.toLocaleString();
+            
+            const container = document.getElementById('scratchpadContainer');
+            if (text.length > 0) {
+                container.classList.add('has-content');
+            } else {
+                container.classList.remove('has-content');
+            }
+        }
+
+        function clearPreview() {
+            if (confirm('Clear document preview?')) {
+                document.getElementById('documentPreview').value = '';
+                documentContent = '';
+                updatePreviewCounter();
+                document.getElementById('processBtn').disabled = true;
+            }
+        }
+
+        function initializeDragDrop() {
+            const uploadZone = document.getElementById('pdfUploadZone');
+            
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+            
+            uploadZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+            });
+            
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const fileInput = document.getElementById('pdfFileInput');
+                    fileInput.files = files;
+                    handlePdfUpload(fileInput);
+                }
+            });
+        }
+
+        function updateStepIndicator(step) {
+            for (let i = 1; i <= 4; i++) {
+                const indicator = document.getElementById(`step${i}-indicator`);
+                if (i < step) {
+                    indicator.className = 'step completed';
+                } else if (i === step) {
+                    indicator.className = 'step active';
+                } else {
+                    indicator.className = 'step';
+                }
+            }
+        }
+
+        function showStep(step) {
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`step${i}`).style.display = 'none';
+            }
+            document.getElementById(`step${step}`).style.display = 'block';
+            currentStep = step;
+            updateStepIndicator(step);
+        }
+
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('statusMessages');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show border-0 shadow-sm`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            statusDiv.appendChild(alert);
+            
+            // Auto-dismiss after 5 seconds for info messages
+            if (type === 'info' || type === 'success') {
+                setTimeout(() => {
+                    if (alert.parentNode) {
+                        alert.remove();
+                    }
+                }, 5000);
+            }
+        }
+
+        function downloadFile(fileType) {
+            if (!currentSessionId) {
+                showStatus('No analysis session found.', 'warning');
+                return;
+            }
+            
+            // Use analysis_ prefix for download files
+            const url = `/download/${currentSessionId.replace('analysis_', '')}/${fileType}`;
+            const link = document.createElement('a');
+            link.href = url;
+            link.click();
+        }
+
+        function resetAnalysis() {
+            if (confirm('Start a new analysis? This will clear current results.')) {
+                currentStep = 1;
+                selectedTemplate = null;
+                documentContent = '';
+                currentSessionId = null;
+                showStep(1);
+                document.getElementById('statusMessages').innerHTML = '';
+                document.getElementById('documentPreview').value = '';
+                updatePreviewCounter();
+                document.getElementById('selectTemplateBtn').disabled = true;
+                document.getElementById('processBtn').disabled = true;
+                
+                // Reload templates
+                loadTemplates();
+            }
+        }
+    </script>
+</body>
+</html>

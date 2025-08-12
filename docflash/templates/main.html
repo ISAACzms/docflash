@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doc Flash - Content Intelligence Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* ChatGPT-style Theme System */
+        :root {
+            /* Light theme colors (ChatGPT style) */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f7f7f8;
+            --bg-tertiary: #ececf1;
+            --text-primary: #0d0d0d;
+            --text-secondary: #676767;
+            --text-tertiary: #8e8ea0;
+            --border-light: #e5e5e5;
+            --border-medium: #c5c5d2;
+            --accent-green: #10a37f;
+            --accent-green-hover: #0d8a6b;
+            --accent-blue: #1976d2;
+            --accent-red: #e53e3e;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-medium: rgba(0, 0, 0, 0.15);
+        }
+
+        [data-theme="dark"] {
+            /* Dark theme colors (ChatGPT style) */
+            --bg-primary: #212121;
+            --bg-secondary: #2f2f2f;
+            --bg-tertiary: #404040;
+            --text-primary: #ececec;
+            --text-secondary: #c5c5c5;
+            --text-tertiary: #8e8ea0;
+            --border-light: #4d4d4f;
+            --border-medium: #565869;
+            --accent-green: #10a37f;
+            --accent-green-hover: #0d8a6b;
+            --accent-blue: #4285f4;
+            --accent-red: #f56565;
+            --shadow-light: rgba(0, 0, 0, 0.3);
+            --shadow-medium: rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: var(--bg-primary);
+            border-bottom: 1px solid var(--border-light);
+            box-shadow: 0 1px 3px var(--shadow-light);
+        }
+
+        .navbar-brand {
+            color: var(--text-primary) !important;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .nav-link {
+            color: var(--text-secondary) !important;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary) !important;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border-light);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .hero-section {
+            background-color: var(--bg-primary);
+            padding: 4rem 0;
+            text-align: center;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .feature-cards {
+            padding: 4rem 0;
+        }
+
+        .feature-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 2.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            height: 100%;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px var(--shadow-medium);
+            border-color: var(--accent-green);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            background-color: var(--accent-green);
+            color: white;
+        }
+
+        .analyze-icon {
+            background-color: var(--accent-blue);
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .feature-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-stats {
+            display: flex;
+            gap: 1rem;
+            margin-top: auto;
+        }
+
+        .stat-item {
+            flex: 1;
+            text-align: center;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+
+        .stat-number {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .templates-section {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        .template-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 8px;
+            transition: background-color 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .template-item:hover {
+            background-color: var(--bg-tertiary);
+            border-color: var(--border-light);
+        }
+
+        .template-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .template-info {
+            flex: 1;
+        }
+
+        .template-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .template-meta {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .template-actions {
+            display: flex;
+            gap: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .template-item:hover .template-actions {
+            opacity: 1;
+        }
+
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-light);
+        }
+
+        .btn-primary {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-green-hover);
+            border-color: var(--accent-green-hover);
+            color: white;
+        }
+
+        .btn-outline-primary {
+            color: var(--accent-green);
+            border-color: var(--accent-green);
+            background: transparent;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        .btn-outline-secondary {
+            color: var(--text-secondary);
+            border-color: var(--border-medium);
+            background: transparent;
+        }
+
+        .btn-outline-secondary:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--border-medium);
+            color: var(--text-primary);
+        }
+
+        .btn-outline-danger {
+            color: var(--accent-red);
+            border-color: var(--accent-red);
+            background: transparent;
+        }
+
+        .btn-outline-danger:hover {
+            background: var(--accent-red);
+            border-color: var(--accent-red);
+            color: white;
+        }
+
+        .getting-started {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .alert {
+            border: none;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .alert-info {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-left-color: var(--accent-blue);
+        }
+
+        .alert-danger {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-left-color: var(--accent-red);
+        }
+
+        .modal-content {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border-light);
+        }
+
+        .form-control {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            color: var(--text-primary);
+        }
+
+        .form-control:focus {
+            background-color: var(--bg-secondary);
+            border-color: var(--accent-green);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(16, 163, 127, 0.25);
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .feature-card {
+                padding: 2rem;
+            }
+
+            .template-actions {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-bolt me-2" style="color: #fbbf24;"></i> Doc Flash
+            </a>
+            <div class="navbar-nav ms-auto d-flex align-items-center">
+                <button class="theme-toggle me-3" onclick="toggleTheme()" title="Toggle theme">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                </button>
+                <a class="nav-link" href="/about">About</a>
+                <a class="nav-link" href="#templates">Templates</a>
+                <a class="nav-link" href="#getting-started">Getting Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <h1 class="hero-title">
+                        <i class="fas fa-brain me-3"></i>
+                        Content Intelligence
+                    </h1>
+                    <p class="hero-subtitle">
+                        Create reusable templates for intelligent document extraction, then analyze unlimited documents with AI-powered precision.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feature Cards -->
+    <section class="feature-cards">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <a href="/configure" class="feature-card d-block">
+                        <div class="feature-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <h3 class="feature-title">Configure Templates</h3>
+                        <p class="feature-description">
+                            Create and register extraction templates for different document types. Define schemas, generate examples, and test extractions to build reusable configurations.
+                        </p>
+                        <div class="feature-stats">
+                            <div class="stat-item">
+                                <div class="stat-number" id="templateCount">0</div>
+                                <div class="stat-label">Templates</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">OCR</div>
+                                <div class="stat-label">Enabled</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">AI</div>
+                                <div class="stat-label">Powered</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-lg-6">
+                    <a href="/analyze" class="feature-card d-block">
+                        <div class="feature-icon analyze-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h3 class="feature-title">Analyze Documents</h3>
+                        <p class="feature-description">
+                            Upload new documents and instantly extract structured data using your registered templates. Get results in seconds with OCR and AI processing.
+                        </p>
+                        <div class="feature-stats">
+                            <div class="stat-item">
+                                <div class="stat-number" id="analysisCount">0</div>
+                                <div class="stat-label">Analyses</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">Fast</div>
+                                <div class="stat-label">Processing</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">JSON</div>
+                                <div class="stat-label">Output</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Templates Section -->
+            <div class="row mt-5">
+                <div class="col-12" id="templates">
+                    <div class="templates-section">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="mb-0">
+                                <i class="fas fa-layer-group me-2" style="color: var(--accent-green);"></i>
+                                Registered Templates
+                            </h4>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary" id="templateBadge">0 templates</span>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="loadTemplates()" title="Refresh">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="templatesContainer">
+                            <div class="text-center py-4" style="color: var(--text-secondary);">
+                                <i class="fas fa-inbox fa-2x mb-2"></i>
+                                <p>No templates registered yet. Create your first template to get started!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Getting Started -->
+            <div class="row mt-4" id="getting-started">
+                <div class="col-lg-10 mx-auto">
+                    <div class="getting-started">
+                        <h4 class="mb-4">
+                            <i class="fas fa-rocket me-2" style="color: var(--accent-green);"></i>
+                            Getting Started
+                        </h4>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <div class="step-number">1</div>
+                                    <div>
+                                        <h6 style="color: var(--text-primary);">Configure a Template</h6>
+                                        <p style="color: var(--text-secondary);" class="mb-0">Upload a sample PDF, define extraction schema, and generate examples to create a reusable template.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <div class="step-number">2</div>
+                                    <div>
+                                        <h6 style="color: var(--text-primary);">Analyze Documents</h6>
+                                        <p style="color: var(--text-secondary);" class="mb-0">Use your registered templates to analyze new documents and extract structured data automatically.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Template</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the template "<strong id="deleteTemplateName"></strong>"?</p>
+                    <p class="text-muted mb-0">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-outline-danger" id="confirmDeleteBtn">Delete Template</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let deleteModal;
+        let templateToDelete = null;
+
+        // Theme management
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('theme-icon');
+            icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        // Load templates on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTheme();
+            loadTemplates();
+            deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        });
+
+        async function loadTemplates() {
+            try {
+                const response = await fetch('/list_templates');
+                const result = await response.json();
+                
+                if (result.success && result.templates) {
+                    displayTemplates(result.templates);
+                    updateStats(result.templates);
+                }
+            } catch (error) {
+                console.error('Error loading templates:', error);
+            }
+        }
+
+        function displayTemplates(templates) {
+            const container = document.getElementById('templatesContainer');
+            const badge = document.getElementById('templateBadge');
+            
+            badge.textContent = `${templates.length} template${templates.length !== 1 ? 's' : ''}`;
+            
+            if (templates.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4" style="color: var(--text-secondary);">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <p>No templates registered yet. Create your first template to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const templateIcons = [
+                { class: 'fas fa-file-contract', bg: '#3b82f6' },
+                { class: 'fas fa-receipt', bg: '#f59e0b' },
+                { class: 'fas fa-file-medical', bg: '#10b981' },
+                { class: 'fas fa-file-invoice', bg: '#8b5cf6' },
+                { class: 'fas fa-certificate', bg: '#ef4444' }
+            ];
+
+            container.innerHTML = templates.map((template, index) => {
+                const icon = templateIcons[index % templateIcons.length];
+                const lastUsed = template.last_used ? 
+                    new Date(template.last_used).toLocaleDateString() : 
+                    'Never';
+                
+                return `
+                    <div class="template-item">
+                        <div class="template-icon" style="background-color: ${icon.bg};">
+                            <i class="${icon.class}"></i>
+                        </div>
+                        <div class="template-info">
+                            <div class="template-name">${template.document_class}</div>
+                            <div class="template-meta">
+                                ${template.extraction_schema.length} attributes • 
+                                Used ${template.usage_count} times • 
+                                Last: ${lastUsed}
+                            </div>
+                        </div>
+                        <div class="template-actions">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="editTemplate('${template.document_class}')" title="Edit template">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="confirmDeleteTemplate('${template.document_class}')" title="Delete template">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats(templates) {
+            document.getElementById('templateCount').textContent = templates.length;
+            
+            const totalAnalyses = templates.reduce((sum, t) => sum + (t.usage_count || 0), 0);
+            document.getElementById('analysisCount').textContent = totalAnalyses;
+        }
+
+        function editTemplate(documentClass) {
+            window.location.href = `/configure?edit_template=${encodeURIComponent(documentClass)}`;
+        }
+
+        function confirmDeleteTemplate(documentClass) {
+            templateToDelete = documentClass;
+            document.getElementById('deleteTemplateName').textContent = documentClass;
+            deleteModal.show();
+        }
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+            if (!templateToDelete) return;
+
+            try {
+                const response = await fetch(`/delete_template/${encodeURIComponent(templateToDelete)}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert(result.message, 'success');
+                    loadTemplates(); // Reload templates
+                } else {
+                    showAlert(`Delete failed: ${result.error}`, 'danger');
+                }
+            } catch (error) {
+                showAlert(`Error deleting template: ${error.message}`, 'danger');
+            }
+
+            deleteModal.hide();
+            templateToDelete = null;
+        });
+
+        function showAlert(message, type) {
+            const alertContainer = document.createElement('div');
+            alertContainer.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertContainer.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertContainer.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertContainer);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (alertContainer.parentNode) {
+                    alertContainer.remove();
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Doc Flash</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* ChatGPT-style Theme System */
+        :root {
+            /* Light theme colors (ChatGPT style) */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f7f7f8;
+            --bg-tertiary: #ececf1;
+            --text-primary: #0d0d0d;
+            --text-secondary: #676767;
+            --text-tertiary: #8e8ea0;
+            --border-light: #e5e5e5;
+            --border-medium: #c5c5d2;
+            --accent-green: #10a37f;
+            --accent-green-hover: #0d8a6b;
+            --accent-blue: #1976d2;
+            --accent-red: #e53e3e;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-medium: rgba(0, 0, 0, 0.15);
+        }
+
+        [data-theme="dark"] {
+            /* Dark theme colors (ChatGPT style) */
+            --bg-primary: #212121;
+            --bg-secondary: #2f2f2f;
+            --bg-tertiary: #404040;
+            --text-primary: #ececec;
+            --text-secondary: #c5c5c5;
+            --text-tertiary: #8e8ea0;
+            --border-light: #4d4d4f;
+            --border-medium: #565869;
+            --accent-green: #10a37f;
+            --accent-green-hover: #0d8a6b;
+            --accent-blue: #4285f4;
+            --accent-red: #f56565;
+            --shadow-light: rgba(0, 0, 0, 0.3);
+            --shadow-medium: rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: var(--bg-primary) !important;
+            border-bottom: 1px solid var(--border-light);
+            box-shadow: 0 2px 4px var(--shadow-light);
+        }
+
+        .about-card {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+
+        .about-card:hover {
+            box-shadow: 0 8px 24px var(--shadow-medium);
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .lightning-logo {
+            color: #ffd700;
+            font-size: 2rem;
+            margin-right: 0.5rem;
+        }
+
+        .contribution-section {
+            background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-blue) 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+
+        .tech-badge {
+            display: inline-block;
+            background: var(--accent-green);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            margin: 0.25rem;
+            transition: background-color 0.2s ease;
+        }
+
+        .tech-badge:hover {
+            background: var(--accent-green-hover);
+        }
+
+        .citation-box {
+            background-color: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-green);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 5px;
+            color: var(--text-secondary);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 2px solid var(--border-light);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+            background-color: var(--bg-tertiary);
+        }
+
+        .btn-primary {
+            background-color: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-green-hover);
+            border-color: var(--accent-green-hover);
+        }
+
+        .btn-outline-primary {
+            color: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        .navbar-brand {
+            color: var(--text-primary) !important;
+            font-weight: 700;
+        }
+
+        .nav-link {
+            color: var(--text-secondary) !important;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-green) !important;
+        }
+
+        .about-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+        }
+
+        .about-header h1 {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .about-header .lead {
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-bolt lightning-logo"></i>Doc Flash
+            </a>
+            <div class="navbar-nav ms-auto d-flex align-items-center">
+                <button class="theme-toggle me-3" onclick="toggleTheme()" title="Toggle theme">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                </button>
+                <a class="nav-link" href="/">Home</a>
+                <a class="nav-link active" href="/about">About</a>
+                <a class="nav-link" href="#templates">Templates</a>
+                <a class="nav-link" href="#getting-started">Getting Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="about-header">
+            <h1 class="display-4 fw-bold">
+                <i class="fas fa-bolt lightning-logo"></i>About Doc Flash
+            </h1>
+            <p class="lead">Fast, intelligent document processing with the power of AI</p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                
+                <!-- What is Doc Flash -->
+                <div class="about-card">
+                    <h2><i class="fas fa-zap feature-icon"></i> What is Doc Flash?</h2>
+                    <p class="lead">Doc Flash is a powerful document intelligence platform that enables you to extract structured information from unstructured documents using advanced AI and OCR technologies.</p>
+                    
+                    <p>Built on top of the excellent <strong>LangExtract</strong> framework, Doc Flash provides an intuitive web interface for:</p>
+                    <ul>
+                        <li><strong>Schema Definition:</strong> Define what information you want to extract</li>
+                        <li><strong>OCR Processing:</strong> Convert PDFs to text using advanced multimodal AI models</li>
+                        <li><strong>AI Extraction:</strong> Use large language models to extract structured data</li>
+                        <li><strong>Multi-Provider Support:</strong> Works with Azure OpenAI, OpenAI, Google Gemini, and custom models</li>
+                        <li><strong>Validation & Export:</strong> Validate results and export in multiple formats</li>
+                    </ul>
+                </div>
+
+                <!-- Built By -->
+                <div class="about-card">
+                    <h2><i class="fas fa-user feature-icon"></i> Created By</h2>
+                    <p><strong>Lionel Martis</strong> developed Doc Flash as a user-friendly interface to make document intelligence accessible to everyone. The tool builds upon the solid foundation provided by the LangExtract framework.</p>
+                </div>
+
+                <!-- Built With -->
+                <div class="about-card">
+                    <h2><i class="fas fa-heart feature-icon"></i> Built With</h2>
+                    <p>Doc Flash is powered by excellent open-source technologies:</p>
+                    
+                    <div class="mb-3">
+                        <h5>🧠 Core AI Framework:</h5>
+                        <span class="tech-badge">Google LangExtract</span>
+                        <span class="tech-badge">Stanford DSPy</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5>🚀 Backend & APIs:</h5>
+                        <span class="tech-badge">FastAPI</span>
+                        <span class="tech-badge">Python</span>
+                        <span class="tech-badge">Azure OpenAI</span>
+                    </div>
+                    
+                    <p class="text-muted">
+                        <small>For detailed acknowledgments, citations, and licensing information, please see our 
+                        <a href="https://github.com/LM-150A/doc-flash#acknowledgments" target="_blank">README documentation</a>.</small>
+                    </p>
+                </div>
+
+                <!-- Technology Stack -->
+                <div class="about-card">
+                    <h2><i class="fas fa-cogs feature-icon"></i> Technology Stack</h2>
+                    <p>Doc Flash leverages modern technologies to deliver fast and reliable document processing with AI-powered intelligence:</p>
+                    
+                    <div class="mb-3">
+                        <h5>Backend Framework:</h5>
+                        <span class="tech-badge">Python</span>
+                        <span class="tech-badge">FastAPI</span>
+                        <span class="tech-badge">Uvicorn</span>
+                        <span class="tech-badge">AsyncIO</span>
+                        <span class="tech-badge">Pydantic</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5>AI & Document Intelligence:</h5>
+                        <span class="tech-badge">LangExtract</span>
+                        <span class="tech-badge">Azure OpenAI GPT-4.1</span>
+                        <span class="tech-badge">OpenAI GPT-4o</span>
+                        <span class="tech-badge">Google Gemini 1.5</span>
+                        <span class="tech-badge">vLLM</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5>Document Processing & OCR:</h5>
+                        <span class="tech-badge">Multimodal AI Models</span>
+                        <span class="tech-badge">PDF2Image</span>
+                        <span class="tech-badge">PikePDF</span>
+                        <span class="tech-badge">OpenCV</span>
+                        <span class="tech-badge">Tesseract OCR</span>
+                        <span class="tech-badge">Base64 Encoding</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5>Real-time Features:</h5>
+                        <span class="tech-badge">WebSockets</span>
+                        <span class="tech-badge">Background Tasks</span>
+                        <span class="tech-badge">Progress Tracking</span>
+                        <span class="tech-badge">Dynamic Batching</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5>Frontend:</h5>
+                        <span class="tech-badge">HTML5</span>
+                        <span class="tech-badge">Bootstrap 5</span>
+                        <span class="tech-badge">JavaScript ES6+</span>
+                        <span class="tech-badge">CSS Variables</span>
+                        <span class="tech-badge">Font Awesome</span>
+                    </div>
+                </div>
+
+                <!-- Features -->
+                <div class="about-card">
+                    <h2><i class="fas fa-star feature-icon"></i> Key Features</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-tachometer-alt text-primary"></i> High Performance</h5>
+                            <ul>
+                                <li>Dynamic batching with async processing</li>
+                                <li>Intelligent retry logic with exponential backoff</li>
+                                <li>Rate limit handling</li>
+                                <li>Real-time progress monitoring</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-plug text-primary"></i> Multi-Provider Support</h5>
+                            <ul>
+                                <li>Azure OpenAI (GPT-4.1, GPT-4o)</li>
+                                <li>OpenAI (GPT-4.1-mini, GPT-4o-mini)</li>
+                                <li>Google Gemini (1.5-pro, 1.5-flash)</li>
+                                <li>Custom vLLM deployments</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-file-alt text-primary"></i> Document Intelligence</h5>
+                            <ul>
+                                <li>Advanced OCR with multimodal AI</li>
+                                <li>Automatic orientation correction</li>
+                                <li>Table detection and conversion</li>
+                                <li>Handwriting recognition</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-download text-primary"></i> Export Options</h5>
+                            <ul>
+                                <li>JSON structured output</li>
+                                <li>Interactive visualizations</li>
+                                <li>Organized file management</li>
+                                <li>Validation and quality checks</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contribution Section -->
+                <div class="contribution-section" id="templates">
+                    <h2><i class="fas fa-code-branch"></i> Contribute to Doc Flash</h2>
+                    <p class="lead">Doc Flash is open source and welcomes contributions from the community!</p>
+                    
+                    <h4>Ways to Contribute:</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul>
+                                <li><strong>Bug Reports:</strong> Found an issue? Let us know!</li>
+                                <li><strong>Feature Requests:</strong> Suggest new capabilities</li>
+                                <li><strong>Code Contributions:</strong> Submit pull requests</li>
+                                <li><strong>Documentation:</strong> Improve guides and examples</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul>
+                                <li><strong>Testing:</strong> Test with different document types</li>
+                                <li><strong>Templates:</strong> Share extraction templates</li>
+                                <li><strong>Integrations:</strong> Add new provider support</li>
+                                <li><strong>UI/UX:</strong> Enhance user experience</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <a href="https://github.com/lionelmartis/doc-flash" class="btn btn-light btn-lg" target="_blank">
+                            <i class="fab fa-github me-2"></i>View on GitHub
+                        </a>
+                        <a href="https://github.com/lionelmartis/doc-flash/issues" class="btn btn-outline-light btn-lg ms-3" target="_blank">
+                            <i class="fas fa-bug me-2"></i>Report Issues
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Getting Started -->
+                <div class="about-card" id="getting-started">
+                    <h2><i class="fas fa-rocket feature-icon"></i> Getting Started</h2>
+                    <p>Ready to start extracting structured data from your documents? Here's how to get started:</p>
+                    
+                    <ol>
+                        <li><strong>Configure your LLM provider</strong> in the <code>.env</code> file</li>
+                        <li><strong>Define your schema</strong> - specify what information to extract</li>
+                        <li><strong>Upload sample documents</strong> or use OCR to process PDFs</li>
+                        <li><strong>Generate examples</strong> with AI assistance</li>
+                        <li><strong>Run extraction</strong> and validate results</li>
+                        <li><strong>Export and visualize</strong> your structured data</li>
+                    </ol>
+                    
+                    <div class="text-center mt-4">
+                        <a href="/" class="btn btn-primary btn-lg">
+                            <i class="fas fa-play me-2"></i>Start Extracting
+                        </a>
+                        <a href="/CONFIGURATION.md" class="btn btn-outline-primary btn-lg ms-3" target="_blank">
+                            <i class="fas fa-cog me-2"></i>Configuration Guide
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (html.getAttribute('data-theme') === 'light') {
+                html.setAttribute('data-theme', 'dark');
+                themeIcon.className = 'fas fa-sun';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.setAttribute('data-theme', 'light');
+                themeIcon.className = 'fas fa-moon';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme');
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Template - Doc Flash</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* ChatGPT-style Theme System */
+        :root {
+            /* Light theme colors (ChatGPT style) */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f7f7f8;
+            --bg-tertiary: #ececf1;
+            --text-primary: #0d0d0d;
+            --text-secondary: #676767;
+            --text-tertiary: #8e8ea0;
+            --border-light: #e5e5e5;
+            --border-medium: #c5c5d2;
+            --accent-green: #10a37f;
+            --accent-green-hover: #0d8a6b;
+            --accent-blue: #1976d2;
+            --accent-red: #e53e3e;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-medium: rgba(0, 0, 0, 0.15);
+        }
+
+        [data-theme="dark"] {
+            /* Dark theme colors (ChatGPT style) */
+            --bg-primary: #212121;
+            --bg-secondary: #2f2f2f;
+            --bg-tertiary: #404040;
+            --text-primary: #ececec;
+            --text-secondary: #c5c5c5;
+            --text-tertiary: #8e8ea0;
+            --border-light: #4d4d4f;
+            --border-medium: #565869;
+            --accent-green: #10a37f;
+            --accent-green-hover: #0d8a6b;
+            --accent-blue: #4285f4;
+            --accent-red: #f56565;
+            --shadow-light: rgba(0, 0, 0, 0.3);
+            --shadow-medium: rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .navbar {
+            background-color: var(--bg-primary) !important;
+            border-bottom: 1px solid var(--border-light);
+            box-shadow: 0 2px 10px var(--shadow-light);
+        }
+
+        .navbar-brand, .nav-link {
+            color: var(--text-primary) !important;
+        }
+
+        .nav-link:hover {
+            background-color: var(--bg-tertiary);
+            border-radius: 6px;
+        }
+
+        .card {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+
+        .card-header {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-light);
+            border-radius: 12px 12px 0 0 !important;
+        }
+
+        .form-control, .form-select {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: var(--bg-primary);
+            border-color: var(--accent-green);
+            box-shadow: 0 0 0 0.25rem rgba(16, 163, 127, 0.25);
+        }
+
+        .btn-primary {
+            background-color: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-green-hover);
+            border-color: var(--accent-green-hover);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border-light);
+            color: var(--text-secondary);
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .breadcrumb {
+            background: none;
+            padding: 0;
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--accent-green);
+        }
+
+        .breadcrumb-item.active {
+            color: var(--text-primary);
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+
+        .alert-success {
+            background-color: rgba(16, 163, 127, 0.1);
+            color: var(--accent-green);
+        }
+
+        .alert-warning {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: #f57c00;
+        }
+
+        .alert-danger {
+            background-color: rgba(229, 62, 62, 0.1);
+            color: var(--accent-red);
+        }
+
+        .table {
+            color: var(--text-primary);
+        }
+
+        .table th {
+            border-top: none;
+            border-bottom: 2px solid var(--border-light);
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .table td {
+            border-top: 1px solid var(--border-light);
+        }
+
+        .extraction-item {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            padding: 15px;
+        }
+
+        .example-item {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+
+        .loading-spinner {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-bolt me-2" style="color: #fbbf24;"></i> Doc Flash
+            </a>
+            <div class="navbar-nav ms-auto d-flex align-items-center">
+                <button class="theme-toggle me-3" onclick="toggleTheme()" title="Toggle theme">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                </button>
+                <a class="nav-link" href="/">Home</a>
+                <a class="nav-link" href="/configure">Configure</a>
+                <a class="nav-link active" href="/analyze">Analyze</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        <!-- Breadcrumb Navigation -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="/"><i class="fas fa-home me-1"></i>Home</a></li>
+                <li class="breadcrumb-item"><a href="#" onclick="goBack()">Templates</a></li>
+                <li class="breadcrumb-item active">Edit Template</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="container mt-4">
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-5">
+            <div class="loading-spinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted">Loading template data...</p>
+            </div>
+        </div>
+
+        <!-- Template Editor -->
+        <div id="templateEditor" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="mb-0">
+                                <i class="fas fa-edit me-2" style="color: var(--accent-green);"></i>
+                                Edit Template: <span id="templateName"></span>
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            <!-- Status Messages -->
+                            <div id="statusContainer"></div>
+
+                            <!-- Basic Information -->
+                            <div class="mb-4">
+                                <h5><i class="fas fa-info-circle me-2"></i>Basic Information</h5>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="documentClass" class="form-label">Document Class</label>
+                                        <input type="text" class="form-control" id="documentClass" readonly>
+                                        <small class="text-muted">Document class cannot be changed after creation</small>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="templateUsage" class="form-label">Usage Count</label>
+                                        <input type="text" class="form-control" id="templateUsage" readonly>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="promptDescription" class="form-label">Prompt Description</label>
+                                    <textarea class="form-control" id="promptDescription" rows="3" 
+                                              placeholder="Describe what information should be extracted..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Extraction Schema -->
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5><i class="fas fa-table me-2"></i>Extraction Schema</h5>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="addSchemaRow()">
+                                        <i class="fas fa-plus me-1"></i> Add Attribute
+                                    </button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table" id="schemaTable">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 25%;">Attribute Name</th>
+                                                <th style="width: 45%;">Description</th>
+                                                <th style="width: 15%;">Mode</th>
+                                                <th style="width: 15%;">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Schema rows will be populated here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Output Schema -->
+                            <div class="mb-4">
+                                <h5><i class="fas fa-code me-2"></i>Output Schema (JSON)</h5>
+                                <textarea class="form-control" id="outputSchema" rows="8" 
+                                          placeholder="Define your target JSON schema format..."></textarea>
+                            </div>
+
+                            <!-- Examples -->
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5><i class="fas fa-file-text me-2"></i>Training Examples</h5>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="addExample()">
+                                        <i class="fas fa-plus me-1"></i> Add Example
+                                    </button>
+                                </div>
+                                <div id="examplesContainer">
+                                    <!-- Examples will be populated here -->
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <button class="btn btn-secondary me-2" onclick="goBack()">
+                                        <i class="fas fa-arrow-left me-1"></i> Cancel
+                                    </button>
+                                </div>
+                                <div>
+                                    <button class="btn btn-success me-2" onclick="saveTemplate()">
+                                        <i class="fas fa-save me-1"></i> Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentTemplate = null;
+        let originalDocumentClass = null;
+
+        // Theme management
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('theme-icon');
+            icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        // Status messaging
+        function showStatus(message, type = 'info') {
+            const container = document.getElementById('statusContainer');
+            container.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+
+        // Get URL parameter
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // Load template data
+        async function loadTemplate() {
+            const documentClass = getUrlParameter('document_class') || getUrlParameter('class');
+            console.log('🔧 [DEBUG] Starting loadTemplate with documentClass:', documentClass);
+            alert('Debug: Starting to load template: ' + documentClass);
+            
+            if (!documentClass) {
+                showStatus('No template specified.', 'warning');
+                return;
+            }
+
+            document.getElementById('loadingState').querySelector('.loading-spinner').style.display = 'block';
+
+            try {
+                console.log('🔧 [DEBUG] Loading template:', documentClass);
+                const response = await fetch(`/get_template/${documentClass}`);
+                const result = await response.json();
+                
+                console.log('🔧 [DEBUG] Raw API response:', result);
+
+                if (result.success) {
+                    currentTemplate = result.template;
+                    originalDocumentClass = documentClass;
+                    console.log('🔧 [DEBUG] Template loaded:', currentTemplate);
+                    console.log('🔧 [DEBUG] Template extraction_schema:', currentTemplate.extraction_schema);
+                    populateForm(currentTemplate);
+                    
+                    document.getElementById('loadingState').style.display = 'none';
+                    document.getElementById('templateEditor').style.display = 'block';
+                } else {
+                    console.log('🔧 [DEBUG] API call failed:', result);
+                    showStatus(`Failed to load template: ${result.error}`, 'danger');
+                }
+            } catch (error) {
+                console.error('🔧 [DEBUG] Error loading template:', error);
+                showStatus(`Error loading template: ${error.message}`, 'danger');
+            }
+        }
+
+        // Populate form with template data
+        function populateForm(template) {
+            console.log('🔧 [DEBUG] Populating form with template data');
+            
+            // Basic information
+            document.getElementById('templateName').textContent = template.document_class;
+            document.getElementById('documentClass').value = template.document_class;
+            document.getElementById('templateUsage').value = `${template.usage_count || 0} times`;
+            document.getElementById('promptDescription').value = template.prompt_description || '';
+            
+            // Output schema
+            if (template.output_schema) {
+                document.getElementById('outputSchema').value = JSON.stringify(template.output_schema, null, 2);
+            }
+
+            // Populate schema
+            populateSchema(template.extraction_schema || []);
+
+            // Populate examples
+            populateExamples(template.examples || []);
+
+            console.log('🔧 [DEBUG] Form populated successfully');
+        }
+
+        // Populate schema table
+        function populateSchema(schema) {
+            console.log('🔧 [DEBUG] populateSchema called with:', schema);
+            console.log('🔧 [DEBUG] Schema length:', schema.length);
+            const tbody = document.querySelector('#schemaTable tbody');
+            tbody.innerHTML = '';
+
+            schema.forEach((attr, index) => {
+                console.log(`🔧 [DEBUG] Processing schema attribute ${index}:`, attr);
+                addSchemaRow(attr.attribute, attr.description, attr.mode || 'extract');
+            });
+
+            if (schema.length === 0) {
+                addSchemaRow();
+            }
+        }
+
+        // Add schema row
+        function addSchemaRow(attribute = '', description = '', mode = 'extract') {
+            const tbody = document.querySelector('#schemaTable tbody');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><input type="text" class="form-control" value="${attribute}" placeholder="e.g., client_name"></td>
+                <td><input type="text" class="form-control" value="${description}" placeholder="e.g., Name of the client"></td>
+                <td>
+                    <select class="form-select">
+                        <option value="extract" ${mode === 'extract' ? 'selected' : ''}>Extract</option>
+                        <option value="generate" ${mode === 'generate' ? 'selected' : ''}>Generate</option>
+                    </select>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeSchemaRow(this)" title="Remove">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        }
+
+        // Remove schema row
+        function removeSchemaRow(button) {
+            button.closest('tr').remove();
+        }
+
+        // Populate examples
+        function populateExamples(examples) {
+            const container = document.getElementById('examplesContainer');
+            container.innerHTML = '';
+
+            examples.forEach((example, index) => {
+                addExampleToDOM(example.text, example.extractions, index);
+            });
+
+            if (examples.length === 0) {
+                addExample();
+            }
+        }
+
+        // Add example
+        function addExample() {
+            const container = document.getElementById('examplesContainer');
+            const exampleIndex = container.children.length;
+            addExampleToDOM('', [], exampleIndex);
+        }
+
+        // Add example to DOM
+        function addExampleToDOM(text = '', extractions = [], exampleIndex) {
+            const container = document.getElementById('examplesContainer');
+            const exampleDiv = document.createElement('div');
+            exampleDiv.className = 'example-item';
+            exampleDiv.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6><i class="fas fa-file-text me-2"></i>Example ${exampleIndex + 1}</h6>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeExample(this)" title="Remove Example">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Sample Text</label>
+                    <textarea class="form-control example-text" rows="4" placeholder="Enter sample document text...">${text}</textarea>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label">Extractions</label>
+                        <button class="btn btn-sm btn-outline-primary" onclick="addExtraction(${exampleIndex})" type="button">
+                            <i class="fas fa-plus me-1"></i> Add Extraction
+                        </button>
+                    </div>
+                    <div class="extractions-container" data-example-index="${exampleIndex}">
+                        <!-- Extractions will be added here -->
+                    </div>
+                </div>
+            `;
+            container.appendChild(exampleDiv);
+
+            // Add extractions
+            extractions.forEach(extraction => {
+                addExtractionToDOM(exampleIndex, extraction.extraction_class, extraction.extraction_text, extraction.attributes);
+            });
+
+            // If no extractions, add one empty one
+            if (extractions.length === 0) {
+                addExtraction(exampleIndex);
+            }
+        }
+
+        // Add extraction
+        function addExtraction(exampleIndex) {
+            addExtractionToDOM(exampleIndex);
+        }
+
+        // Add extraction to DOM
+        function addExtractionToDOM(exampleIndex, extractionClass = '', extractionText = '', attributes = {}) {
+            const container = document.querySelector(`[data-example-index="${exampleIndex}"].extractions-container`);
+            const extractionDiv = document.createElement('div');
+            extractionDiv.className = 'extraction-item';
+            extractionDiv.innerHTML = `
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label">Extraction Class</label>
+                        <input type="text" class="form-control extraction-class" value="${extractionClass}" placeholder="e.g., client_name">
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label">Extraction Text</label>
+                        <input type="text" class="form-control extraction-text" value="${extractionText}" placeholder="e.g., John Doe">
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label">Attributes (JSON)</label>
+                        <input type="text" class="form-control extraction-attributes" value='${JSON.stringify(attributes)}' placeholder='{"key": "value"}'>
+                    </div>
+                    <div class="col-md-1 mb-2">
+                        <label class="form-label">&nbsp;</label>
+                        <button class="btn btn-outline-danger btn-sm d-block" onclick="removeExtraction(this)" title="Remove">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(extractionDiv);
+        }
+
+        // Remove extraction
+        function removeExtraction(button) {
+            button.closest('.extraction-item').remove();
+        }
+
+        // Remove example
+        function removeExample(button) {
+            button.closest('.example-item').remove();
+            renumberExamples();
+        }
+
+        // Renumber examples
+        function renumberExamples() {
+            const examples = document.querySelectorAll('.example-item');
+            examples.forEach((example, index) => {
+                example.querySelector('h6').innerHTML = `<i class="fas fa-file-text me-2"></i>Example ${index + 1}`;
+                example.querySelector('.extractions-container').setAttribute('data-example-index', index);
+            });
+        }
+
+        // Get schema data
+        function getSchemaData() {
+            const rows = document.querySelectorAll('#schemaTable tbody tr');
+            const schema = [];
+            rows.forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                const select = row.querySelector('select');
+                if (inputs[0].value && inputs[1].value) {
+                    schema.push({
+                        attribute: inputs[0].value,
+                        description: inputs[1].value,
+                        mode: select ? select.value : 'extract'
+                    });
+                }
+            });
+            return schema;
+        }
+
+        // Get examples data
+        function getExamplesData() {
+            const examples = [];
+            const exampleDivs = document.querySelectorAll('.example-item');
+            
+            exampleDivs.forEach((exampleDiv, exampleIndex) => {
+                const text = exampleDiv.querySelector('.example-text').value;
+                const extractions = [];
+                
+                const extractionItems = exampleDiv.querySelectorAll('.extraction-item');
+                extractionItems.forEach(extractionItem => {
+                    const extractionClass = extractionItem.querySelector('.extraction-class').value;
+                    const extractionText = extractionItem.querySelector('.extraction-text').value;
+                    const attributesText = extractionItem.querySelector('.extraction-attributes').value;
+                    
+                    let attributes = {};
+                    try {
+                        attributes = JSON.parse(attributesText);
+                    } catch (e) {
+                        attributes = {};
+                    }
+                    
+                    if (extractionClass && extractionText) {
+                        extractions.push({
+                            extraction_class: extractionClass,
+                            extraction_text: extractionText,
+                            attributes: attributes
+                        });
+                    }
+                });
+                
+                if (text && extractions.length > 0) {
+                    examples.push({
+                        text: text,
+                        extractions: extractions
+                    });
+                }
+            });
+            
+            return examples;
+        }
+
+        // Save template
+        async function saveTemplate() {
+            const documentClass = document.getElementById('documentClass').value.trim();
+            const promptDescription = document.getElementById('promptDescription').value;
+            const outputSchemaText = document.getElementById('outputSchema').value;
+            
+            if (!documentClass) {
+                showStatus('Document class is required.', 'warning');
+                return;
+            }
+
+            let parsedOutputSchema = {};
+            try {
+                parsedOutputSchema = JSON.parse(outputSchemaText);
+            } catch (e) {
+                showStatus('Invalid JSON in output schema. Please fix before saving.', 'warning');
+                return;
+            }
+
+            const extractionSchema = getSchemaData();
+            const examples = getExamplesData();
+
+            if (extractionSchema.length === 0) {
+                showStatus('At least one schema attribute is required.', 'warning');
+                return;
+            }
+
+            if (examples.length === 0) {
+                showStatus('At least one example is required.', 'warning');
+                return;
+            }
+
+            try {
+                console.log('🔧 [DEBUG] Saving template:', documentClass);
+                const response = await fetch('/update_template', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        original_document_class: originalDocumentClass,
+                        document_class: documentClass,
+                        extraction_schema: extractionSchema,
+                        prompt_description: promptDescription,
+                        examples: examples,
+                        output_schema: parsedOutputSchema
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showStatus(`✅ ${result.message}`, 'success');
+                    console.log('🔧 [DEBUG] Template saved successfully');
+                } else {
+                    showStatus(`Save failed: ${result.error}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving template:', error);
+                showStatus(`Error saving template: ${error.message}`, 'danger');
+            }
+        }
+
+        // Go back
+        function goBack() {
+            window.history.back();
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTheme();
+            loadTemplate();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,3049 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doc Flash</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* ChatGPT-style Theme System */
+        :root {
+            /* Light theme colors (ChatGPT style) */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f7f7f8;
+            --bg-tertiary: #ececf1;
+            --text-primary: #0d0d0d;
+            --text-secondary: #676767;
+            --text-tertiary: #8e8ea0;
+            --border-light: #e5e5e5;
+            --border-medium: #c5c5d2;
+            --accent-green: #10a37f;
+            --accent-green-hover: #0d8a6b;
+            --accent-blue: #1976d2;
+            --accent-red: #e53e3e;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-medium: rgba(0, 0, 0, 0.15);
+            --border-color: var(--border-light);
+            --btn-close-filter: brightness(0) saturate(100%) invert(0%);
+        }
+
+        [data-theme="dark"] {
+            /* Dark theme colors (ChatGPT style) */
+            --bg-primary: #212121;
+            --bg-secondary: #2f2f2f;
+            --bg-tertiary: #404040;
+            --text-primary: #ececec;
+            --text-secondary: #c5c5c5;
+            --text-tertiary: #8e8ea0;
+            --border-light: #4d4d4f;
+            --border-medium: #565869;
+            --accent-green: #10a37f;
+            --accent-green-hover: #0d8a6b;
+            --accent-blue: #4285f4;
+            --accent-red: #f56565;
+            --shadow-light: rgba(0, 0, 0, 0.3);
+            --shadow-medium: rgba(0, 0, 0, 0.4);
+            --border-color: var(--border-light);
+            --btn-close-filter: brightness(0) saturate(100%) invert(93%) sepia(0%) saturate(24%) hue-rotate(41deg) brightness(98%) contrast(96%);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .navbar {
+            background-color: var(--bg-primary);
+            border-bottom: 1px solid var(--border-light);
+            box-shadow: 0 1px 3px var(--shadow-light);
+        }
+
+        .navbar-brand {
+            color: var(--text-primary) !important;
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+
+        .nav-link {
+            color: var(--text-secondary) !important;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-primary) !important;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border-light);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .breadcrumb {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .breadcrumb-item a {
+            color: var(--accent-green);
+            text-decoration: none;
+        }
+
+        .breadcrumb-item.active {
+            color: var(--text-secondary);
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 1px 3px var(--shadow-light);
+        }
+
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            margin: 0 5px;
+            position: relative;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .step:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .step.active {
+            background: var(--accent-green);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 163, 127, 0.3);
+        }
+
+        .step.completed {
+            background: var(--accent-green);
+            color: white;
+            border-color: var(--accent-green);
+        }
+
+        .step.clickable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .step.clickable:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 163, 127, 0.3);
+        }
+
+        .scratchpad-container {
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+        }
+
+        .scratchpad {
+            border: 2px dashed var(--border-light);
+            border-radius: 12px;
+            background: var(--bg-primary);
+            transition: all 0.3s ease;
+        }
+
+        .scratchpad.has-content {
+            border-color: var(--accent-green);
+            background: var(--bg-primary);
+            box-shadow: 0 4px 12px rgba(16, 163, 127, 0.1);
+        }
+
+        .card {
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px var(--shadow-light);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .card-header {
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-light);
+            border-radius: 12px 12px 0 0 !important;
+            padding: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .card-body {
+            color: var(--text-primary);
+        }
+
+        .pdf-upload-zone {
+            border: 2px dashed var(--accent-blue);
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .pdf-upload-zone:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .pdf-upload-zone.dragover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-blue);
+            transform: scale(1.02);
+        }
+
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-light);
+        }
+
+        .btn-primary {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-green-hover);
+            border-color: var(--accent-green-hover);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: var(--accent-green-hover);
+            border-color: var(--accent-green-hover);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            border-color: var(--border-medium);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
+            border-color: var(--border-medium);
+            color: var(--text-primary);
+        }
+
+        .btn-outline-secondary {
+            color: var(--text-secondary);
+            border-color: var(--border-medium);
+            background: transparent;
+        }
+
+        .btn-outline-secondary:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--border-medium);
+            color: var(--text-primary);
+        }
+
+        .btn-outline-danger {
+            color: var(--accent-red);
+            border-color: var(--accent-red);
+            background: transparent;
+        }
+
+        .btn-outline-danger:hover {
+            background: var(--accent-red);
+            border-color: var(--accent-red);
+            color: white;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            transition: all 0.2s ease;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.1);
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .form-label {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .text-muted {
+            color: var(--text-secondary) !important;
+        }
+
+        .schema-table th {
+            background-color: var(--bg-tertiary);
+            border-color: var(--border-light);
+            color: var(--text-primary);
+        }
+
+        .schema-table {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-light);
+        }
+
+        .schema-table td {
+            border-color: var(--border-light);
+            background-color: var(--bg-primary);
+        }
+
+        .extraction-result {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-left: 4px solid var(--accent-green);
+            border: 1px solid var(--border-light);
+            color: var(--text-primary);
+        }
+
+        .json-output {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 0.875rem;
+        }
+
+        .loading-spinner {
+            display: none;
+        }
+
+        .sample-text-group, .example-item, .extraction-item {
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .sample-text-group:hover, .example-item:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+
+        .extraction-item:hover {
+            border-color: var(--accent-green);
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+
+        .remove-sample-btn, .remove-example-btn, .remove-extraction-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .sample-text-group:hover .remove-sample-btn,
+        .example-item:hover .remove-example-btn,
+        .extraction-item:hover .remove-extraction-btn {
+            opacity: 1;
+        }
+
+        .status-message {
+            margin: 1rem 0;
+        }
+
+        .alert {
+            border: none;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-green);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .alert-info {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-left-color: var(--accent-blue);
+        }
+
+        .alert-success {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-left-color: var(--accent-green);
+        }
+
+        .alert-warning {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-left-color: #f59e0b;
+        }
+
+        .alert-danger {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-left-color: var(--accent-red);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .scratchpad-container {
+                position: static;
+                margin-bottom: 2rem;
+            }
+            
+            .step-indicator {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .step {
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-bolt me-2" style="color: #fbbf24;"></i> Doc Flash
+            </a>
+            <div class="navbar-nav ms-auto d-flex align-items-center">
+                <button class="theme-toggle me-3" onclick="toggleTheme()" title="Toggle theme">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                </button>
+                <a class="nav-link" href="/">Home</a>
+                <a class="nav-link active" href="/configure">Configure</a>
+                <a class="nav-link" href="/analyze">Analyze</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        <!-- Breadcrumb Navigation -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="/"><i class="fas fa-home me-1"></i>Home</a></li>
+                <li class="breadcrumb-item active">Configure Template</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="container-fluid mt-4">
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step active" id="step1-indicator">
+                <i class="fas fa-edit mb-2"></i>
+                <div>1. Define Schema</div>
+            </div>
+            <div class="step" id="step2-indicator">
+                <i class="fas fa-magic mb-2"></i>
+                <div>2. Generate Examples</div>
+            </div>
+            <div class="step" id="step3-indicator">
+                <i class="fas fa-play mb-2"></i>
+                <div>3. Run Extraction</div>
+            </div>
+            <div class="step" id="step4-indicator">
+                <i class="fas fa-download mb-2"></i>
+                <div>4. Download Results</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- Step 1: Schema Definition -->
+                <div id="step1" class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="fas fa-table me-2"></i> Step 1: Define Your Extraction Schema</h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Document Class Section -->
+                        <div class="mb-4">
+                            <label for="documentClass" class="form-label fw-bold">Document Class:</label>
+                            <input type="text" class="form-control" id="documentClass" placeholder="e.g., Services Agreement, Medical Report, Invoice" required onblur="validateDocumentClass()">
+                            <div class="invalid-feedback">
+                                Document Class is required to proceed.
+                            </div>
+                            <small class="text-muted">Give this document type a unique name. This will be used to register and identify your template.</small>
+                        </div>
+
+                        <!-- PDF Upload Section -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Upload PDF Document:</label>
+                            <div class="pdf-upload-zone" id="pdfUploadZone" onclick="document.getElementById('pdfFileInput').click()">
+                                <input type="file" id="pdfFileInput" accept=".pdf" style="display: none;" onchange="handlePdfUpload(this)">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                <h5 class="mb-2">Click to upload PDF or drag and drop</h5>
+                                <p class="text-muted mb-0">OCR will convert your PDF to markdown and load it into the scratchpad</p>
+                            </div>
+                            <div id="pdfUploadStatus" class="mt-3"></div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <label class="form-label fw-bold mb-0">Sample Texts:</label>
+                                    <button class="btn btn-success btn-sm" onclick="addSampleText()">
+                                        <i class="fas fa-plus me-1"></i> Add Sample
+                                    </button>
+                                </div>
+                                <div id="sampleTextsContainer">
+                                    <div class="sample-text-group mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <small class="text-muted"><i class="fas fa-file-text me-1"></i> Sample 1</small>
+                                        </div>
+                                        <textarea class="form-control sample-text" rows="6" placeholder="Paste your sample document text here...">SERVICES AGREEMENT
+
+This Services Agreement is entered into on January 15, 2024, between ABC Marketing Solutions LLC ("Service Provider") and TechStart Inc. ("Client"). 
+
+The Service Provider agrees to provide digital marketing consulting services for a total contract value of $25,000 over a period of 6 months. Services include market research, campaign development, and performance analytics.</textarea>
+                                    </div>
+                                </div>
+                                <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Multiple samples help generate more diverse extraction examples</small>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="form-label fw-bold mb-0">Extraction Attributes:</label>
+                                    <button type="button" class="btn btn-sm btn-outline-info ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="EXTRACT mode: Find exact text spans from document (like names, dates, amounts). GENERATE mode: Create interpreted information (like summaries, risk assessments, classifications).">
+                                        <i class="fas fa-question-circle"></i>
+                                    </button>
+                                </div>
+                                <table class="table table-bordered schema-table" id="schemaTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Attribute Name</th>
+                                            <th>Description</th>
+                                            <th>Mode</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="e.g., client_name" value="client_name"></td>
+                                            <td><input type="text" class="form-control" placeholder="e.g., Name of the client receiving services" value="Name of the client receiving services"></td>
+                                            <td>
+                                                <select class="form-control form-control-sm">
+                                                    <option value="extract" selected>Extract</option>
+                                                    <option value="generate">Generate</option>
+                                                </select>
+                                            </td>
+                                            <td><button class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fas fa-trash"></i></button></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="e.g., service_provider" value="service_provider"></td>
+                                            <td><input type="text" class="form-control" placeholder="e.g., Name of the company providing services" value="Name of the company providing services"></td>
+                                            <td>
+                                                <select class="form-control form-control-sm">
+                                                    <option value="extract" selected>Extract</option>
+                                                    <option value="generate">Generate</option>
+                                                </select>
+                                            </td>
+                                            <td><button class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fas fa-trash"></i></button></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <button class="btn btn-secondary btn-sm" onclick="addSchemaRow()">
+                                    <i class="fas fa-plus me-1"></i> Add Attribute
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <label for="outputSchema" class="form-label fw-bold">Target Output Schema (JSON):</label>
+                                <textarea class="form-control" id="outputSchema" rows="6" placeholder="Define your target JSON schema format...">
+{
+  "contract_details": {
+    "parties": {
+      "client_name": {"result": "<value>", "page_number": "<pages>"},
+      "service_provider": {"result": "<value>", "page_number": "<pages>"}
+    },
+    "terms": {
+      "service_description": {"result": "<value>", "page_number": "<pages>"},
+      "contract_value": {"result": "<value>", "page_number": "<pages>"},
+      "contract_duration": {"result": "<value>", "page_number": "<pages>"}
+    }
+  }
+}</textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Model Configuration:</strong> Models are configured via environment variables. Check your <code>.env</code> file to set <code>AZURE_OPENAI_MODEL_ID</code> or similar settings.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-end mt-4">
+                            <button class="btn btn-primary btn-lg" onclick="generateExamples()">
+                                <i class="fas fa-bolt me-2"></i> Generate Examples & Prompts
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Generated Examples -->
+                <div id="step2" class="card mb-4" style="display: none;">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="fas fa-code me-2"></i> Step 2: Generated Examples & Prompts</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="loading-spinner text-center" id="loadingExamples">
+                            <div class="spinner-border text-primary mb-3" role="status">
+                                <span class="visually-hidden">Generating examples...</span>
+                            </div>
+                            <p class="text-muted">⚡ AI is generating examples and prompts...</p>
+                        </div>
+
+                        <div id="generatedContent" style="display: none;">
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label fw-bold mb-0">Prompt Description:</label>
+                                    <small class="text-muted"><i class="fas fa-edit me-1"></i> Editable - customize as needed</small>
+                                </div>
+                                <textarea class="form-control" id="promptDescription" rows="3" placeholder="Describe what information should be extracted..."></textarea>
+                                
+                                <!-- Prompt Description Feedback Controls -->
+                                <div class="d-flex justify-content-between align-items-center mt-2" id="promptFeedbackControls" style="display: none !important;">
+                                    <small class="text-muted">💡 Tip: Be specific about what to extract and include any special instructions</small>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <small class="text-muted me-2">Rate this prompt description:</small>
+                                        <button class="btn btn-sm btn-outline-success" onclick="submitPromptFeedback('positive')" title="Good prompt description">
+                                            <i class="fas fa-thumbs-up"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="submitPromptFeedback('negative')" title="Needs improvement">
+                                            <i class="fas fa-thumbs-down"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" onclick="showPromptFeedbackModal()" title="Detailed feedback">
+                                            <i class="fas fa-comment"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="text-muted mt-1" id="promptTip">💡 Tip: Be specific about what to extract and include any special instructions</small>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <label class="form-label fw-bold mb-0">Extraction Examples:</label>
+                                    <div class="d-flex align-items-center">
+                                        <!-- Compact Rating UI -->
+                                        <div class="me-3" id="compactRatingUI" style="display: none;">
+                                            <button class="btn btn-sm btn-outline-success me-1" onclick="quickMasterFeedback('positive')" title="Good examples">
+                                                <i class="fas fa-thumbs-up"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger me-1" onclick="quickMasterFeedback('negative')" title="Need improvement">
+                                                <i class="fas fa-thumbs-down"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-primary me-1" onclick="showMasterFeedbackModal()" title="Detailed feedback">
+                                                <i class="fas fa-comment"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary me-2" onclick="showFeedbackManagementModal()" title="Manage feedback history">
+                                                <i class="fas fa-history"></i>
+                                            </button>
+                                        </div>
+                                        
+                                        <button class="btn btn-outline-secondary btn-sm me-2" onclick="regenerateExamples()">
+                                            <i class="fas fa-redo me-1"></i> Regenerate
+                                        </button>
+                                        <button class="btn btn-outline-primary btn-sm" onclick="addExampleManually()">
+                                            <i class="fas fa-plus me-1"></i> Add Example
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="examplesContainer"></div>
+                                <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Examples guide the AI on what to extract. Edit text and extractions as needed.</small>
+                            </div>
+
+                            <div class="text-end">
+                                <button class="btn btn-success btn-lg" onclick="runExtraction()">
+                                    <i class="fas fa-play me-2"></i> Run Extraction Pipeline
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Extraction Input -->
+                <div id="step3" class="card mb-4" style="display: none;">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="fas fa-file-text me-2"></i> Step 3: Run Extraction</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <label for="inputText" class="form-label fw-bold">Input Text to Extract From:</label>
+                                <textarea class="form-control" id="inputText" rows="12" placeholder="Paste the document you want to extract information from..."></textarea>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="alert alert-info mb-3">
+                                    <i class="fas fa-cog me-1"></i> <strong>Model:</strong> Using configured model from environment
+                                </div>
+                                
+                                <label class="form-label fw-bold">Performance Parameters:</label>
+                                
+                                <div class="mb-3">
+                                    <label for="extractionPasses" class="form-label">Extraction Passes:</label>
+                                    <select class="form-control" id="extractionPasses">
+                                        <option value="1" selected>1 (Standard)</option>
+                                        <option value="2">2 (Better recall)</option>
+                                        <option value="3">3 (Maximum recall)</option>
+                                    </select>
+                                    <small class="text-muted">More passes improve recall but increase API costs</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="maxWorkers" class="form-label">Max Workers:</label>
+                                    <select class="form-control" id="maxWorkers">
+                                        <option value="5">5 (Conservative)</option>
+                                        <option value="10" selected>10 (Balanced)</option>
+                                        <option value="20">20 (Fast processing)</option>
+                                    </select>
+                                    <small class="text-muted">Higher values enable more parallel processing</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="maxCharBuffer" class="form-label">Character Buffer:</label>
+                                    <select class="form-control" id="maxCharBuffer">
+                                        <option value="500">500 (High precision)</option>
+                                        <option value="1000" selected>1000 (Balanced)</option>
+                                        <option value="2000">2000 (Larger contexts)</option>
+                                    </select>
+                                    <small class="text-muted">Smaller values improve accuracy for complex documents</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="loading-spinner text-center" id="loadingExtraction">
+                            <div class="spinner-border text-success mb-3" role="status">
+                                <span class="visually-hidden">Running extraction...</span>
+                            </div>
+                            <p class="text-muted">⚡ Flash extracting information...</p>
+                        </div>
+
+                        <div class="text-end mt-4">
+                            <button class="btn btn-success btn-lg" onclick="processExtraction()">
+                                <i class="fas fa-cogs me-2"></i> Process Document
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Results -->
+                <div id="step4" class="card mb-4" style="display: none;">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="fas fa-chart-bar me-2"></i> Step 4: Extraction Results</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Raw Extractions:</h5>
+                                <div id="rawExtractions"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Structured Output:</h5>
+                                <div id="structuredOutput" class="json-output"></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <h5>Download Results:</h5>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-primary" onclick="downloadFile('visualization')">
+                                    <i class="fas fa-eye me-1"></i> Visualization HTML
+                                </button>
+                                <button class="btn btn-outline-success" onclick="downloadFile('extractions')">
+                                    <i class="fas fa-file-code me-1"></i> Raw Extractions (JSONL)
+                                </button>
+                                <button class="btn btn-outline-info" onclick="downloadFile('schema')">
+                                    <i class="fas fa-file-export me-1"></i> Structured JSON
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <div class="alert alert-info border-0 shadow-sm">
+                                <h6><i class="fas fa-lightbulb me-2"></i> Happy with the results?</h6>
+                                <p class="mb-2">Register this configuration as a reusable template for future document analysis.</p>
+                                <button class="btn btn-success me-2" onclick="registerTemplate()">
+                                    <i class="fas fa-save me-2"></i> Register Template
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="resetApp()">
+                                    <i class="fas fa-redo me-1"></i> Start Over
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scratchpad Sidebar -->
+            <div class="col-lg-4">
+                <div class="scratchpad-container">
+                    <div class="scratchpad" id="scratchpadContainer">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0"><i class="fas fa-sticky-note me-2"></i> Scratchpad</h6>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-secondary" onclick="clearScratchpad()" title="Clear scratchpad">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        <button class="btn btn-outline-primary" onclick="useScratchpadForExtraction()" title="Use as extraction input">
+                                            <i class="fas fa-arrow-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body p-3">
+                                <textarea class="form-control border-0 h-100" id="scratchpadText" rows="25" placeholder="Upload a PDF or paste text here. This content will be available throughout the extraction process." style="resize: none; min-height: 500px;"></textarea>
+                            </div>
+                            <div class="card-footer">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <span id="scratchpadCharCount">0</span> characters
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="statusMessages" class="mt-4"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentStep = 1;
+        let generatedExamples = null;
+        let currentSessionId = null;
+
+        // Scratchpad functionality
+        function updateScratchpadCounter() {
+            const text = document.getElementById('scratchpadText').value;
+            document.getElementById('scratchpadCharCount').textContent = text.length.toLocaleString();
+            
+            const container = document.getElementById('scratchpadContainer');
+            if (text.length > 0) {
+                container.classList.add('has-content');
+            } else {
+                container.classList.remove('has-content');
+            }
+        }
+
+        function clearScratchpad() {
+            if (confirm('Are you sure you want to clear the scratchpad?')) {
+                document.getElementById('scratchpadText').value = '';
+                updateScratchpadCounter();
+            }
+        }
+
+        function useScratchpadForExtraction() {
+            const scratchpadText = document.getElementById('scratchpadText').value;
+            if (scratchpadText.trim()) {
+                document.getElementById('inputText').value = scratchpadText;
+                showStatus('Scratchpad content copied to extraction input!', 'success');
+                if (currentStep < 3) {
+                    showStep(3);
+                }
+            } else {
+                showStatus('Scratchpad is empty. Please add content first.', 'warning');
+            }
+        }
+
+        // Task polling functionality
+        async function pollTaskStatus(taskId, statusDiv) {
+            const maxAttempts = 60; // 5 minutes max (5 second intervals)
+            let attempts = 0;
+            
+            const poll = async () => {
+                try {
+                    const response = await fetch(`/api/task_status/${taskId}`);
+                    const task = await response.json();
+                    
+                    // Update progress bar if progress is available
+                    const progressBar = document.getElementById('ocrProgress');
+                    const progressText = document.getElementById('ocrProgressText');
+                    if (progressBar && task.progress !== undefined) {
+                        const roundedProgress = Math.round(task.progress);
+                        progressBar.style.width = `${roundedProgress}%`;
+                        progressBar.setAttribute('aria-valuenow', roundedProgress);
+                        
+                        // Update progress text if available
+                        if (progressText) {
+                            if (roundedProgress === 0) {
+                                progressText.textContent = 'Processing PDF with OCR...';
+                            } else if (roundedProgress === 100) {
+                                progressText.textContent = 'OCR processing completed!';
+                            } else {
+                                progressText.textContent = `Processing pages... ${roundedProgress}%`;
+                            }
+                        }
+                    }
+                    
+                    if (task.status === 'completed') {
+                        // Ensure progress is 100%
+                        if (progressBar) {
+                            progressBar.style.width = '100%';
+                            progressBar.setAttribute('aria-valuenow', 100);
+                        }
+                        
+                        // Load content into scratchpad
+                        document.getElementById('scratchpadText').value = task.result;
+                        updateScratchpadCounter();
+                        
+                        // Show success message
+                        statusDiv.innerHTML = `
+                            <div class="alert alert-success border-0 shadow-sm">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>OCR completed successfully!</strong> Content loaded to scratchpad.
+                            </div>
+                        `;
+                        
+                        showStatus('PDF processed successfully! Content loaded to scratchpad.', 'success');
+                        return;
+                        
+                    } else if (task.status === 'failed') {
+                        statusDiv.innerHTML = `
+                            <div class="alert alert-danger border-0 shadow-sm">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                <strong>OCR processing failed:</strong> ${task.error || 'Unknown error'}
+                            </div>
+                        `;
+                        showStatus(`OCR processing failed: ${task.error || 'Unknown error'}`, 'danger');
+                        return;
+                        
+                    } else if (task.status === 'processing') {
+                        // Update progress if available
+                        const progressBar = document.getElementById('ocrProgress');
+                        if (progressBar && task.progress) {
+                            progressBar.style.width = `${task.progress}%`;
+                        }
+                        
+                        // Continue polling
+                        attempts++;
+                        if (attempts < maxAttempts) {
+                            setTimeout(poll, 5000); // Poll every 5 seconds
+                        } else {
+                            statusDiv.innerHTML = `
+                                <div class="alert alert-warning border-0 shadow-sm">
+                                    <i class="fas fa-clock me-2"></i>
+                                    <strong>Processing timeout.</strong> Please try again or check if the file is too large.
+                                </div>
+                            `;
+                            showStatus('Processing timeout. Please try again.', 'warning');
+                        }
+                    }
+                    
+                } catch (error) {
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-danger border-0 shadow-sm">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <strong>Error checking task status:</strong> ${error.message}
+                        </div>
+                    `;
+                    showStatus(`Error checking task status: ${error.message}`, 'danger');
+                }
+            };
+            
+            // Start polling after a short delay
+            setTimeout(poll, 2000);
+        }
+
+        // PDF Upload functionality
+        async function handlePdfUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                showStatus('Please select a PDF file.', 'warning');
+                return;
+            }
+
+            const statusDiv = document.getElementById('pdfUploadStatus');
+            statusDiv.innerHTML = `
+                <div class="alert alert-info border-0 shadow-sm">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm me-3" role="status"></div>
+                        <div>
+                            <strong>Processing PDF: ${file.name}</strong>
+                            <br><small class="text-muted">This may take a few moments...</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const formData = new FormData();
+            formData.append('pdf_file', file);
+
+            try {
+                const response = await fetch('/upload_pdf', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Show immediate feedback that upload started
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-info border-0 shadow-sm">
+                            <i class="fas fa-upload me-2"></i>
+                            <strong>${result.message}</strong>
+                            <div class="progress mt-2" style="height: 8px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 0%" id="ocrProgress" 
+                                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+                            </div>
+                            <small class="text-muted" id="ocrProgressText">Processing PDF with OCR...</small>
+                        </div>
+                    `;
+                    
+                    showStatus(result.message, 'info');
+                    
+                    // Start polling for task completion
+                    pollTaskStatus(result.task_id, statusDiv);
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-danger border-0 shadow-sm">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <strong>Error:</strong> ${result.message || result.detail}
+                        </div>
+                    `;
+                    showStatus(`PDF processing failed: ${result.error || result.detail}`, 'danger');
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="alert alert-danger border-0 shadow-sm">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>Error uploading PDF:</strong> ${error.message}
+                    </div>
+                `;
+                showStatus(`Error uploading PDF: ${error.message}`, 'danger');
+            }
+
+            // Clear the input
+            input.value = '';
+        }
+
+        // Drag and drop functionality
+        function initializeDragDrop() {
+            const uploadZone = document.getElementById('pdfUploadZone');
+            
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+            
+            uploadZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+            });
+            
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const fileInput = document.getElementById('pdfFileInput');
+                    fileInput.files = files;
+                    handlePdfUpload(fileInput);
+                }
+            });
+        }
+
+        // Step management
+        function updateStepIndicator(step) {
+            for (let i = 1; i <= 4; i++) {
+                const indicator = document.getElementById(`step${i}-indicator`);
+                if (i < step) {
+                    indicator.className = 'step completed clickable';
+                } else if (i === step) {
+                    indicator.className = 'step active';
+                } else {
+                    indicator.className = 'step';
+                }
+            }
+        }
+
+        function showStep(step, resetState = true) {
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`step${i}`).style.display = 'none';
+            }
+            document.getElementById(`step${step}`).style.display = 'block';
+            currentStep = step;
+            updateStepIndicator(step);
+            
+            // Only reset state when explicitly requested (button clicks)
+            if (resetState) {
+                resetStepState(step);
+            }
+        }
+        
+        function resetStepState(step) {
+            if (step === 2) {
+                // Reset step 2 (examples generation)
+                document.getElementById('loadingExamples').style.display = 'none';
+                document.getElementById('generatedContent').style.display = 'none';
+            } else if (step === 3) {
+                // Reset step 3 (extraction)
+                document.getElementById('loadingExtraction').style.display = 'none';
+            }
+        }
+        
+        function navigateToStep(step) {
+            // Used for manual navigation - preserves state
+            showStep(step, false);
+        }
+
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('statusMessages');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show status-message border-0 shadow-sm`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            statusDiv.appendChild(alert);
+            
+            // Auto-dismiss after 5 seconds for info messages
+            if (type === 'info' || type === 'success') {
+                setTimeout(() => {
+                    if (alert.parentNode) {
+                        alert.remove();
+                    }
+                }, 5000);
+            }
+        }
+
+        // Schema management
+        function addSchemaRow() {
+            const tbody = document.querySelector('#schemaTable tbody');
+            const newRow = tbody.insertRow();
+            newRow.innerHTML = `
+                <td><input type="text" class="form-control" placeholder="Attribute name"></td>
+                <td><input type="text" class="form-control" placeholder="Description"></td>
+                <td>
+                    <select class="form-control form-control-sm">
+                        <option value="extract" selected>Extract</option>
+                        <option value="generate">Generate</option>
+                    </select>
+                </td>
+                <td><button class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fas fa-trash"></i></button></td>
+            `;
+        }
+
+        function removeRow(button) {
+            button.closest('tr').remove();
+        }
+
+        function getSchemaData() {
+            const rows = document.querySelectorAll('#schemaTable tbody tr');
+            const schema = [];
+            rows.forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                const select = row.querySelector('select');
+                if (inputs[0].value && inputs[1].value) {
+                    schema.push({
+                        attribute: inputs[0].value,
+                        description: inputs[1].value,
+                        mode: select ? select.value : 'extract'
+                    });
+                }
+            });
+            return schema;
+        }
+
+        // Sample text management
+        let sampleTextCounter = 1;
+
+        function addSampleText() {
+            sampleTextCounter++;
+            const container = document.getElementById('sampleTextsContainer');
+            const newSampleGroup = document.createElement('div');
+            newSampleGroup.className = 'sample-text-group mb-3';
+            newSampleGroup.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <small class="text-muted"><i class="fas fa-file-text me-1"></i> Sample ${sampleTextCounter}</small>
+                    <button class="btn btn-sm btn-outline-danger remove-sample-btn" onclick="removeSampleText(this)" title="Remove this sample">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <textarea class="form-control sample-text" rows="4" placeholder="Paste another sample document text here..."></textarea>
+            `;
+            container.appendChild(newSampleGroup);
+            
+            // Focus on the new textarea
+            newSampleGroup.querySelector('textarea').focus();
+        }
+
+        function removeSampleText(button) {
+            const sampleGroup = button.closest('.sample-text-group');
+            sampleGroup.remove();
+            
+            // Renumber remaining samples
+            const remainingSamples = document.querySelectorAll('.sample-text-group');
+            remainingSamples.forEach((group, index) => {
+                const label = group.querySelector('small');
+                label.innerHTML = `<i class="fas fa-file-text me-1"></i> Sample ${index + 1}`;
+            });
+            
+            sampleTextCounter = remainingSamples.length;
+        }
+
+        function getAllSampleTexts() {
+            const sampleTextareas = document.querySelectorAll('.sample-text');
+            const sampleTexts = [];
+            
+            sampleTextareas.forEach(textarea => {
+                const text = textarea.value.trim();
+                if (text.length > 0) {
+                    sampleTexts.push(text);
+                }
+            });
+            
+            return sampleTexts;
+        }
+
+        // Example management
+        function displayEditableExamples(examples) {
+            const container = document.getElementById('examplesContainer');
+            if (!container) {
+                console.error('❌ [ERROR] examplesContainer not found!');
+                return;
+            }
+            container.innerHTML = '';
+            
+            examples.forEach((example, exampleIndex) => {
+                const exampleDiv = document.createElement('div');
+                exampleDiv.className = 'example-item rl-enabled';
+                exampleDiv.innerHTML = `
+                    <div class="example-header d-flex justify-content-between align-items-center mb-3">
+                        <div class="example-title-group">
+                            <label class="form-label fw-bold mb-0">Example ${exampleIndex + 1}</label>
+                            <span class="badge badge-rl ms-2">🧠 AI Generated</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger remove-example-btn" onclick="removeExample(${exampleIndex})" title="Remove this example">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Sample Text:</label>
+                        <textarea class="form-control example-text" rows="3" data-example-index="${exampleIndex}">${example.text}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label fw-bold mb-0">Extractions:</label>
+                            <button class="btn btn-sm btn-outline-success" onclick="addExtraction(${exampleIndex})">
+                                <i class="fas fa-plus me-1"></i> Add Extraction
+                            </button>
+                        </div>
+                        <div class="extractions-container" data-example-index="${exampleIndex}">
+                            ${example.extractions.map((extraction, extractionIndex) => `
+                                <div class="extraction-item" data-extraction-index="${extractionIndex}">
+                                    <button class="btn btn-sm btn-outline-danger remove-extraction-btn" onclick="removeExtraction(${exampleIndex}, ${extractionIndex})" title="Remove this extraction">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="form-label"><small>Class:</small></label>
+                                            <input type="text" class="form-control form-control-sm extraction-class" value="${extraction.extraction_class}" data-example-index="${exampleIndex}" data-extraction-index="${extractionIndex}">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label"><small>Text:</small></label>
+                                            <input type="text" class="form-control form-control-sm extraction-text" value="${extraction.extraction_text}" data-example-index="${exampleIndex}" data-extraction-index="${extractionIndex}">
+                                        </div>  
+                                        <div class="col-md-4">
+                                            <label class="form-label"><small>Attributes (JSON):</small></label>
+                                            <textarea class="form-control form-control-sm extraction-attributes" rows="1" data-example-index="${exampleIndex}" data-extraction-index="${extractionIndex}">${JSON.stringify(extraction.attributes || {})}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(exampleDiv);
+            });
+            
+            
+            // Show compact feedback UI
+            showCompactFeedbackUI(container);
+        }
+        
+        function showStepWithEditMode(step, resetState = false) {
+            // Special navigation function for edit mode that preserves clickability
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`step${i}`).style.display = 'none';
+            }
+            document.getElementById(`step${step}`).style.display = 'block';
+            currentStep = step;
+            
+            // Custom step indicator logic for edit mode
+            for (let i = 1; i <= 4; i++) {
+                const indicator = document.getElementById(`step${i}-indicator`);
+                if (i === step) {
+                    indicator.className = 'step active';
+                } else if (i <= 2) {
+                    // In edit mode, make steps 1 and 2 always clickable
+                    indicator.className = 'step completed clickable';
+                } else {
+                    indicator.className = 'step';
+                }
+            }
+            
+            // Only reset state when explicitly requested
+            if (resetState) {
+                resetStepState(step);
+            }
+        }
+        
+        function showCompactFeedbackUI(container) {
+            // Show the compact rating UI next to regenerate button
+            const compactUI = document.getElementById('compactRatingUI');
+            if (compactUI) {
+                compactUI.style.display = 'block';
+            }
+            
+            // Add just a subtle status indicator below examples
+            const statusDiv = document.createElement('div');
+            statusDiv.id = 'masterFeedbackStatus';
+            statusDiv.className = 'text-center mt-2';
+            container.appendChild(statusDiv);
+        }
+        
+        let masterFeedbackData = {};
+        let lastQuickFeedbackType = null; // Track last thumbs up/down selection
+        
+        function quickMasterFeedback(feedbackType) {
+            lastQuickFeedbackType = feedbackType; // Remember the quick feedback choice
+            
+            // Store current session feedback (adds to accumulated feedback, doesn't replace it)
+            masterFeedbackData = {
+                type: feedbackType,
+                rating: feedbackType === 'positive' ? 4 : 2,
+                timestamp: new Date().toISOString(),
+                examples: generatedExamples,
+                session_id: Date.now() // Unique session identifier
+            };
+            
+            console.log('🧠 [RL] Quick feedback stored:', feedbackType, 'at', new Date().toISOString());
+            console.log('🔍 [RL] masterFeedbackData after quick feedback:', JSON.stringify(masterFeedbackData, null, 2));
+            
+            // CRITICAL FIX: Store master feedback to server immediately
+            storeMasterFeedbackToServer(masterFeedbackData);
+            
+            // Visual feedback
+            const statusDiv = document.getElementById('masterFeedbackStatus');
+            const icon = feedbackType === 'positive' ? '👍' : '👎';
+            statusDiv.innerHTML = `<small class="badge badge-rl">${icon} New feedback added! Building on previous feedback for this document class.</small>`;
+            
+            // Update button states in compact UI
+            document.querySelectorAll('#compactRatingUI button').forEach(btn => {
+                btn.classList.remove('btn-success', 'btn-danger');
+                if (btn.onclick && btn.onclick.toString().includes('positive')) {
+                    btn.classList.add('btn-outline-success');
+                } else if (btn.onclick && btn.onclick.toString().includes('negative')) {
+                    btn.classList.add('btn-outline-danger');
+                } else {
+                    btn.classList.add('btn-outline-primary');
+                }
+            });
+            
+            const selectedBtn = feedbackType === 'positive' ? 
+                document.querySelector('[onclick="quickMasterFeedback(\'positive\')"]') : 
+                document.querySelector('[onclick="quickMasterFeedback(\'negative\')"]');
+            
+            if (selectedBtn) {
+                selectedBtn.classList.remove(feedbackType === 'positive' ? 'btn-outline-success' : 'btn-outline-danger');
+                selectedBtn.classList.add(feedbackType === 'positive' ? 'btn-success' : 'btn-danger');
+            }
+            
+            showStatus(`New feedback added: ${feedbackType}. Accumulating with previous feedback for this document class!`, 'success');
+        }
+        
+        function showMasterFeedbackModal() {
+            // Create modal if it doesn't exist
+            if (!document.getElementById('masterFeedbackModal')) {
+                createMasterFeedbackModal();
+            }
+            
+            // Update modal to show current feedback choice
+            updateModalFeedbackDisplay();
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('masterFeedbackModal'));
+            modal.show();
+        }
+        
+        function updateModalFeedbackDisplay() {
+            const feedbackDisplay = document.getElementById('currentFeedbackDisplay');
+            const ratingDisplay = document.getElementById('currentRatingDisplay');
+            
+            if (lastQuickFeedbackType === 'positive') {
+                feedbackDisplay.innerHTML = `
+                    <i class="fas fa-thumbs-up text-success"></i> 
+                    You selected: <strong>Thumbs Up</strong>
+                `;
+                ratingDisplay.innerHTML = '<strong>positive feedback (4/5 rating)</strong>';
+            } else if (lastQuickFeedbackType === 'negative') {
+                feedbackDisplay.innerHTML = `
+                    <i class="fas fa-thumbs-down text-danger"></i> 
+                    You selected: <strong>Thumbs Down</strong>
+                `;
+                ratingDisplay.innerHTML = '<strong>negative feedback (2/5 rating)</strong>';
+            } else {
+                feedbackDisplay.innerHTML = `
+                    <i class="fas fa-question-circle text-muted"></i> 
+                    Please first click <strong>👍 or 👎</strong> to give feedback
+                `;
+                ratingDisplay.innerHTML = 'No feedback selected yet';
+            }
+        }
+        
+        async function showFeedbackManagementModal() {
+            const documentClass = document.getElementById('documentClass').value.trim();
+            if (!documentClass) {
+                showStatus('Please enter a document class name first.', 'warning');
+                return;
+            }
+            
+            // Create modal if it doesn't exist
+            if (!document.getElementById('feedbackManagementModal')) {
+                createFeedbackManagementModal();
+            }
+            
+            // Load feedback data for this document class
+            await loadFeedbackForDocumentClass(documentClass);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('feedbackManagementModal'));
+            modal.show();
+        }
+        
+        async function loadFeedbackForDocumentClass(documentClass) {
+            try {
+                const response = await fetch(`/api/feedback/${documentClass}`);
+                const result = await response.json();
+                
+                const feedbackContainer = document.getElementById('feedbackHistoryContainer');
+                if (!result.success || !result.feedback || result.feedback.length === 0) {
+                    feedbackContainer.innerHTML = '<p class="text-muted text-center">No feedback history found for this document class.</p>';
+                    return;
+                }
+                
+                // Display feedback entries
+                let feedbackHTML = '';
+                result.feedback.forEach((entry, index) => {
+                    const feedbackType = entry.feedback_type || 'unknown';
+                    const timestamp = new Date(entry.timestamp).toLocaleString();
+                    const rating = entry.detailed_feedback?.rating || null;
+                    const comments = entry.detailed_feedback?.comments || '';
+                    const issues = entry.detailed_feedback?.issues || [];
+                    
+                    const icon = feedbackType === 'positive' ? '👍' : feedbackType === 'negative' ? '👎' : '❓';
+                    const badgeClass = feedbackType === 'positive' ? 'bg-success' : feedbackType === 'negative' ? 'bg-danger' : 'bg-secondary';
+                    
+                    feedbackHTML += `
+                        <div class="feedback-entry border rounded p-3 mb-3" id="feedback-${entry.feedback_id}">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <span class="badge ${badgeClass} me-2">${icon} ${feedbackType}</span>
+                                    ${rating ? `<span class="badge bg-warning text-dark">${rating}⭐</span>` : ''}
+                                </div>
+                                <div>
+                                    <small class="text-muted">${timestamp}</small>
+                                    <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteFeedbackEntry('${entry.feedback_id}', '${documentClass}')" title="Delete this feedback">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            ${comments ? `<p class="mb-2"><strong>Comments:</strong> ${comments}</p>` : ''}
+                            ${issues.length > 0 ? `<p class="mb-0"><strong>Issues:</strong> ${issues.join(', ')}</p>` : ''}
+                        </div>
+                    `;
+                });
+                
+                feedbackContainer.innerHTML = feedbackHTML;
+                
+            } catch (error) {
+                console.error('Error loading feedback:', error);
+                document.getElementById('feedbackHistoryContainer').innerHTML = '<p class="text-danger">Error loading feedback history.</p>';
+            }
+        }
+        
+        async function deleteFeedbackEntry(feedbackId, documentClass) {
+            if (!confirm('Are you sure you want to delete this feedback? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/feedback/${feedbackId}`, {
+                    method: 'DELETE',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    // Remove from UI
+                    const feedbackElement = document.getElementById(`feedback-${feedbackId}`);
+                    if (feedbackElement) {
+                        feedbackElement.remove();
+                    }
+                    
+                    showStatus('Feedback deleted successfully!', 'success');
+                    
+                    // Reload feedback to show updated state
+                    await loadFeedbackForDocumentClass(documentClass);
+                } else {
+                    showStatus(`Failed to delete feedback: ${result.error}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error deleting feedback:', error);
+                showStatus('Error deleting feedback.', 'danger');
+            }
+        }
+        
+        function submitMasterFeedback() {
+            // Get rating from thumbs choice (no contradiction possible)
+            const feedbackType = lastQuickFeedbackType || 'positive'; // Default to positive if somehow missing
+            const rating = feedbackType === 'positive' ? 4 : 2;
+            const comments = document.getElementById('masterFeedbackComments').value;
+            
+            // Collect issues
+            const issues = [];
+            if (document.getElementById('master-feedback-wrong-extraction').checked) issues.push('wrong-extraction');
+            if (document.getElementById('master-feedback-incorrect-mapping').checked) issues.push('incorrect-mapping');
+            if (document.getElementById('master-feedback-missing-fields').checked) issues.push('missing-fields');
+            if (document.getElementById('master-feedback-format-issues').checked) issues.push('format-issues');
+            if (document.getElementById('master-feedback-wrong-generation').checked) issues.push('wrong-generation');
+            
+            const detailedFeedback = {
+                rating,
+                issues,
+                comments,
+                timestamp: new Date().toISOString(),
+                examples: generatedExamples
+            };
+            
+            // Store current session detailed feedback (rating always matches thumbs choice)
+            masterFeedbackData = {
+                type: feedbackType,
+                detailed_feedback: detailedFeedback,
+                timestamp: new Date().toISOString(),
+                session_id: Date.now() // Unique session identifier
+            };
+            
+            console.log(`🧠 [RL] Detailed feedback: ${feedbackType} (${rating}/5) with ${issues.length} issues`);
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('masterFeedbackModal'));
+            modal.hide();
+            
+            // Update UI
+            const statusDiv = document.getElementById('masterFeedbackStatus');
+            statusDiv.innerHTML = `<small class="badge badge-rl">💬 Detailed feedback: ${rating}⭐ - ${comments ? 'With comments' : 'No comments'}</small>`;
+            
+            // CRITICAL FIX: Store detailed master feedback to server immediately
+            storeMasterFeedbackToServer(masterFeedbackData);
+            
+            showStatus(`Detailed feedback added (${rating}⭐). Building on all previous feedback for this document class!`, 'success');
+            
+            // Auto-trigger regeneration
+            setTimeout(() => {
+                regenerateExamples();
+            }, 1000);
+        }
+
+        function getEditedExamples() {
+            const examples = [];
+            const exampleDivs = document.querySelectorAll('.example-item');
+            
+            exampleDivs.forEach((exampleDiv, exampleIndex) => {
+                const text = exampleDiv.querySelector('.example-text').value;
+                const extractions = [];
+                
+                const extractionItems = exampleDiv.querySelectorAll('.extraction-item');
+                extractionItems.forEach(extractionItem => {
+                    const extractionClass = extractionItem.querySelector('.extraction-class').value;
+                    const extractionText = extractionItem.querySelector('.extraction-text').value;
+                    const attributesText = extractionItem.querySelector('.extraction-attributes').value;
+                    
+                    let attributes = {};
+                    try {
+                        attributes = JSON.parse(attributesText);
+                    } catch (e) {
+                        attributes = {};
+                    }
+                    
+                    if (extractionClass && extractionText) {
+                        extractions.push({
+                            extraction_class: extractionClass,
+                            extraction_text: extractionText,
+                            attributes: attributes
+                        });
+                    }
+                });
+                
+                if (text && extractions.length > 0) {
+                    examples.push({
+                        text: text,
+                        extractions: extractions
+                    });
+                }
+            });
+            
+            return examples;
+        }
+
+        function addExtraction(exampleIndex) {
+            const extractionsContainer = document.querySelector(`[data-example-index="${exampleIndex}"].extractions-container`);
+            const extractionCount = extractionsContainer.children.length;
+            
+            const newExtraction = document.createElement('div');
+            newExtraction.className = 'extraction-item';
+            newExtraction.setAttribute('data-extraction-index', extractionCount);
+            newExtraction.innerHTML = `
+                <button class="btn btn-sm btn-outline-danger remove-extraction-btn" onclick="removeExtraction(${exampleIndex}, ${extractionCount})" title="Remove this extraction">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="form-label"><small>Class:</small></label>
+                        <input type="text" class="form-control form-control-sm extraction-class" placeholder="e.g., grantor" data-example-index="${exampleIndex}" data-extraction-index="${extractionCount}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label"><small>Text:</small></label>
+                        <input type="text" class="form-control form-control-sm extraction-text" placeholder="Extracted text" data-example-index="${exampleIndex}" data-extraction-index="${extractionCount}">
+                    </div>  
+                    <div class="col-md-4">
+                        <label class="form-label"><small>Attributes (JSON):</small></label>
+                        <textarea class="form-control form-control-sm extraction-attributes" rows="1" data-example-index="${exampleIndex}" data-extraction-index="${extractionCount}">{"page_number": "1"}</textarea>
+                    </div>
+                </div>
+            `;
+            extractionsContainer.appendChild(newExtraction);
+        }
+
+        function removeExtraction(exampleIndex, extractionIndex) {
+            const extractionItem = document.querySelector(`[data-example-index="${exampleIndex}"][data-extraction-index="${extractionIndex}"].extraction-item`);
+            if (extractionItem) {
+                extractionItem.remove();
+            }
+        }
+
+        function removeExample(exampleIndex) {
+            const exampleItems = document.querySelectorAll('.example-item');
+            if (exampleItems[exampleIndex]) {
+                exampleItems[exampleIndex].remove();
+            }
+        }
+
+        function addExampleManually() {
+            const container = document.getElementById('examplesContainer');
+            const exampleCount = container.children.length;
+            
+            const newExample = document.createElement('div');
+            newExample.className = 'example-item';
+            newExample.innerHTML = `
+                <button class="btn btn-sm btn-outline-danger remove-example-btn" onclick="removeExample(${exampleCount})" title="Remove this example">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Example ${exampleCount + 1} - Sample Text:</label>
+                    <textarea class="form-control example-text" rows="3" data-example-index="${exampleCount}" placeholder="Enter sample text here..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label fw-bold mb-0">Extractions:</label>
+                        <button class="btn btn-sm btn-outline-success" onclick="addExtraction(${exampleCount})">
+                            <i class="fas fa-plus me-1"></i> Add Extraction
+                        </button>
+                    </div>
+                    <div class="extractions-container" data-example-index="${exampleCount}">
+                    </div>
+                </div>
+            `;
+            container.appendChild(newExample);
+            
+            // Focus the new textarea
+            newExample.querySelector('.example-text').focus();
+        }
+
+        // Validation functions
+        function validateDocumentClass() {
+            const documentClassInput = document.getElementById('documentClass');
+            const documentClass = documentClassInput.value.trim();
+            
+            if (!documentClass) {
+                documentClassInput.classList.add('is-invalid');
+                documentClassInput.classList.remove('is-valid');
+            } else {
+                documentClassInput.classList.add('is-valid');
+                documentClassInput.classList.remove('is-invalid');
+            }
+        }
+
+        // Main workflow functions
+        async function generateExamples() {
+            const documentClass = document.getElementById('documentClass').value.trim();
+            const allSampleTexts = getAllSampleTexts();
+            const extractionSchema = getSchemaData();
+            const outputSchema = document.getElementById('outputSchema').value;
+
+            // Validate Document Class is provided
+            if (!documentClass) {
+                const documentClassInput = document.getElementById('documentClass');
+                documentClassInput.classList.add('is-invalid');
+                documentClassInput.classList.remove('is-valid');
+                showStatus('Please enter a Document Class name before proceeding.', 'warning');
+                documentClassInput.focus();
+                return;
+            }
+
+            if (allSampleTexts.length === 0 || extractionSchema.length === 0) {
+                showStatus('Please provide at least one sample text and one extraction attribute.', 'warning');
+                return;
+            }
+
+            let parsedOutputSchema = {};
+            try {
+                parsedOutputSchema = JSON.parse(outputSchema);
+            } catch (e) {
+                showStatus('Invalid JSON in output schema. Please check the format.', 'warning');
+                return;
+            }
+
+            showStep(2);
+            document.getElementById('loadingExamples').style.display = 'block';
+
+            try {
+                const response = await fetch('/generate_examples', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        sample_texts: allSampleTexts,
+                        extraction_schema: extractionSchema,
+                        output_schema: parsedOutputSchema,
+                        document_class: documentClass  // For RL feedback tracking
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    generatedExamples = result.examples;
+                    currentRLSessionId = result.session_id; // Store RL session ID
+                    document.getElementById('promptDescription').value = result.prompt_description;
+                    displayEditableExamples(result.examples);
+                    
+                    // Enable prompt feedback controls
+                    enablePromptFeedback();
+                    
+                    document.getElementById('loadingExamples').style.display = 'none';
+                    document.getElementById('generatedContent').style.display = 'block';
+                    
+                    // Show Step 2
+                    document.getElementById('step2').style.display = 'block';
+                    showStatus(result.message + (result.rl_enabled ? ' 🧠 RL Learning Enabled!' : ''), 'success');
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                document.getElementById('loadingExamples').style.display = 'none';
+                showStatus(`Error generating examples: ${error.message}`, 'danger');
+            }
+        }
+
+        async function regenerateExamples() {
+            const documentClass = document.getElementById('documentClass').value.trim();
+            const allSampleTexts = getAllSampleTexts();
+            const extractionSchema = getSchemaData();
+            const outputSchema = document.getElementById('outputSchema').value;
+
+            if (allSampleTexts.length === 0 || extractionSchema.length === 0) {
+                showStatus('Please provide at least one sample text and one extraction attribute.', 'warning');
+                return;
+            }
+
+            let parsedOutputSchema = {};
+            try {
+                parsedOutputSchema = JSON.parse(outputSchema);
+            } catch (e) {
+                showStatus('Invalid JSON in output schema. Please check the format.', 'warning');
+                return;
+            }
+
+            document.getElementById('loadingExamples').style.display = 'block';
+            document.getElementById('generatedContent').style.display = 'none';
+
+            try {
+                const requestBody = {
+                    sample_texts: allSampleTexts,
+                    extraction_schema: extractionSchema,
+                    output_schema: parsedOutputSchema,
+                    document_class: documentClass  // For RL feedback tracking
+                };
+
+                // CRITICAL FIX: Load accumulated master feedback from server instead of just current session
+                requestBody.rl_session_id = currentRLSessionId || `master_${Date.now()}`;
+                requestBody.document_class = documentClass; // Ensure document class is sent for feedback loading
+                
+                // Include current session master feedback if available
+                if (masterFeedbackData && Object.keys(masterFeedbackData).length > 0) {
+                    requestBody.master_feedback = masterFeedbackData;
+                    console.log('🧠 [RL] Regenerating with current session master feedback:', masterFeedbackData.type, masterFeedbackData.detailed_feedback ? '(detailed)' : '(quick)');
+                    console.log('🔍 [RL] Current session feedback data:', JSON.stringify(masterFeedbackData, null, 2));
+                } else {
+                    console.log('🔍 [RL] No current session master feedback, backend will load accumulated feedback');
+                }
+                
+                console.log('🔄 [RL] Backend will load all accumulated feedback for document class:', documentClass);
+
+                const response = await fetch('/generate_examples', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(requestBody)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    generatedExamples = result.examples;
+                    currentRLSessionId = result.session_id; // Store RL session ID
+                    document.getElementById('promptDescription').value = result.prompt_description;
+                    displayEditableExamples(result.examples);
+                    
+                    // Enable prompt feedback controls
+                    enablePromptFeedback();
+                    
+                    document.getElementById('loadingExamples').style.display = 'none';
+                    document.getElementById('generatedContent').style.display = 'block';
+                    
+                    // Enhanced status message for regeneration with master feedback
+                    let statusMessage = result.message;
+                    if (requestBody.master_feedback) {
+                        const feedback = requestBody.master_feedback;
+                        statusMessage += ` 🧠 Regenerated with master feedback (${feedback.type})`;
+                        if (feedback.detailed_feedback) {
+                            const rating = feedback.detailed_feedback.rating || 0;
+                            statusMessage += ` - ${rating}⭐ rating`;
+                            if (feedback.detailed_feedback.comments) {
+                                statusMessage += ' with comments';
+                            }
+                        }
+                        statusMessage += '!';
+                    } else if (result.rl_enabled) {
+                        statusMessage += ' 🧠 RL Applied!';
+                    }
+                    
+                    // Feedback persists per document class - never cleared until document class is deleted
+                    if (requestBody.master_feedback) {
+                        console.log('🧠 [RL] Feedback applied and persisted for document class:', documentClass);
+                        
+                        const statusDiv = document.getElementById('masterFeedbackStatus');
+                        if (statusDiv) {
+                            const feedbackType = requestBody.master_feedback.type;
+                            const icon = feedbackType === 'positive' ? '👍' : '👎';
+                            statusDiv.innerHTML = `<small class="badge badge-rl">${icon} Using accumulated feedback for this document class. Add more feedback anytime!</small>`;
+                        }
+                        
+                        // Keep button states to show current feedback is active
+                        // Feedback will persist until document class is deleted
+                    }
+                    showStatus(statusMessage, 'success');
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                document.getElementById('loadingExamples').style.display = 'none';
+                document.getElementById('generatedContent').style.display = 'block';
+                showStatus(`Error regenerating examples: ${error.message}`, 'danger');
+            }
+        }
+
+        function runExtraction() {
+            showStep(3);
+            
+            // Priority: scratchpad content > first sample text
+            const scratchpadText = document.getElementById('scratchpadText').value.trim();
+            const sampleTexts = getAllSampleTexts();
+            
+            if (scratchpadText) {
+                document.getElementById('inputText').value = scratchpadText;
+                showStatus('Using scratchpad content for extraction!', 'info');
+            } else if (sampleTexts.length > 0) {
+                document.getElementById('inputText').value = sampleTexts[0];
+                showStatus('Using first sample text for extraction.', 'info');
+            } else {
+                showStatus('No content available. Please add text to scratchpad or sample texts.', 'warning');
+            }
+        }
+
+        async function processExtraction() {
+            const inputText = document.getElementById('inputText').value;
+            const promptDescription = document.getElementById('promptDescription').value;
+            const outputSchema = document.getElementById('outputSchema').value;
+            const extractionPasses = parseInt(document.getElementById('extractionPasses').value);
+            const maxWorkers = parseInt(document.getElementById('maxWorkers').value);
+            const maxCharBuffer = parseInt(document.getElementById('maxCharBuffer').value);
+
+            if (!inputText) {
+                showStatus('Please provide input text to extract from.', 'warning');
+                return;
+            }
+
+            let parsedOutputSchema = {};
+            try {
+                parsedOutputSchema = JSON.parse(outputSchema);
+            } catch (e) {
+                showStatus('Invalid JSON in output schema.', 'warning');
+                return;
+            }
+
+            document.getElementById('loadingExtraction').style.display = 'block';
+
+            try {
+                const response = await fetch('/run_extraction', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        input_text: inputText,
+                        prompt_description: promptDescription,
+                        examples: getEditedExamples(),
+                        output_schema: parsedOutputSchema,
+                        extraction_passes: extractionPasses,
+                        max_workers: maxWorkers,
+                        max_char_buffer: maxCharBuffer
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentSessionId = result.session_id;
+                    
+                    // Display raw extractions
+                    const rawDiv = document.getElementById('rawExtractions');
+                    rawDiv.innerHTML = '';
+                    result.extractions.forEach(ext => {
+                        const extDiv = document.createElement('div');
+                        extDiv.className = 'extraction-result';
+                        extDiv.innerHTML = `
+                            <strong>${ext.extraction_class}:</strong> ${ext.extraction_text}
+                            <br><small class="text-muted">Position: ${ext.char_position}</small>
+                        `;
+                        rawDiv.appendChild(extDiv);
+                    });
+                    
+                    // Display structured output
+                    document.getElementById('structuredOutput').textContent = JSON.stringify(result.final_output, null, 2);
+                    
+                    document.getElementById('loadingExtraction').style.display = 'none';
+                    showStep(4);
+                    showStatus(result.message, 'success');
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                document.getElementById('loadingExtraction').style.display = 'none';
+                showStatus(`Error running extraction: ${error.message}`, 'danger');
+            }
+        }
+
+        function downloadFile(fileType) {
+            if (!currentSessionId) {
+                showStatus('No extraction session found.', 'warning');
+                return;
+            }
+            
+            const url = `/download/${currentSessionId}/${fileType}`;
+            const link = document.createElement('a');
+            link.href = url;
+            link.click();
+        }
+
+        async function registerTemplate() {
+            console.log('🔧 [DEBUG] Register Template button clicked - FIXED VERSION v2');
+            const documentClass = document.getElementById('documentClass').value.trim();
+            console.log('🔧 [DEBUG] Document class:', documentClass);
+            
+            if (!documentClass) {
+                console.log('🔧 [DEBUG] No document class provided');
+                showStatus('Please enter a document class name before registering.', 'warning');
+                return;
+            }
+            
+            console.log('🔧 [DEBUG] Generated examples:', generatedExamples ? generatedExamples.length : 'undefined');
+            if (!generatedExamples || generatedExamples.length === 0) {
+                console.log('🔧 [DEBUG] No generated examples available');
+                showStatus('No examples to register. Please generate examples first.', 'warning');
+                return;
+            }
+            
+            // Collect all the configuration data
+            console.log('🔧 [DEBUG] Collecting configuration data...');
+            console.log('🔧 [DEBUG] About to call getSchemaData()');
+            let extractionSchema;
+            try {
+                extractionSchema = getSchemaData();
+                console.log('🔧 [DEBUG] getSchemaData() successful:', extractionSchema);
+                console.log('🔧 [DEBUG] Schema attributes count:', extractionSchema.length);
+            } catch (error) {
+                console.error('🔧 [ERROR] getSchemaData() failed:', error);
+                showStatus('Error getting schema data. Please check your schema fields.', 'danger');
+                return;
+            }
+            
+            const promptDescElement = document.getElementById('promptDescription');
+            const outputSchemaElement = document.getElementById('outputSchema');
+            
+            console.log('🔧 [DEBUG] Elements found:', {
+                promptDescElement: !!promptDescElement,
+                outputSchemaElement: !!outputSchemaElement
+            });
+            
+            if (!promptDescElement) {
+                console.error('🔧 [ERROR] promptDescription element not found!');
+                showStatus('UI Error: Prompt description field not found. Please refresh the page.', 'danger');
+                return;
+            }
+            
+            if (!outputSchemaElement) {
+                console.error('🔧 [ERROR] outputSchema element not found!');
+                showStatus('UI Error: Output schema field not found. Please refresh the page.', 'danger');
+                return;
+            }
+            
+            const promptDescription = promptDescElement.value;
+            const outputSchema = outputSchemaElement.value;
+            
+            console.log('🔧 [DEBUG] Extraction schema:', extractionSchema);
+            console.log('🔧 [DEBUG] Output schema raw:', outputSchema);
+            
+            let parsedOutputSchema = {};
+            try {
+                parsedOutputSchema = JSON.parse(outputSchema);
+                console.log('🔧 [DEBUG] Parsed output schema:', parsedOutputSchema);
+            } catch (e) {
+                console.log('🔧 [DEBUG] JSON parse error:', e);
+                showStatus('Invalid JSON in output schema. Please fix before registering.', 'warning');
+                return;
+            }
+            
+            try {
+                console.log('🔧 [DEBUG] Preparing request data...');
+                const editedExamples = getEditedExamples();
+                console.log('🔧 [DEBUG] Edited examples:', editedExamples);
+                console.log('🔧 [DEBUG] Examples count:', editedExamples.length);
+                if (editedExamples.length > 0) {
+                    console.log('🔧 [DEBUG] First example:', editedExamples[0]);
+                    console.log('🔧 [DEBUG] First example extractions:', editedExamples[0].extractions?.length);
+                }
+                
+                const requestData = {
+                    document_class: documentClass,
+                    extraction_schema: extractionSchema,
+                    prompt_description: promptDescription,
+                    examples: editedExamples,
+                    output_schema: parsedOutputSchema
+                };
+                console.log('🔧 [DEBUG] Full request data:', requestData);
+                
+                console.log('🔧 [DEBUG] Sending request to /register_template...');
+                const response = await fetch('/register_template', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(requestData)
+                });
+                
+                console.log('🔧 [DEBUG] Response status:', response.status);
+                const result = await response.json();
+                console.log('🔧 [DEBUG] Response data:', result);
+                
+                if (result.success) {
+                    console.log('🔧 [DEBUG] Registration successful');
+                    showStatus(`✅ ${result.message} You can now use this template in the Analyze Documents section.`, 'success');
+                    
+                    // Show success modal or redirect option
+                    setTimeout(() => {
+                        if (confirm('Template registered successfully! Would you like to go to the main page to see your registered templates?')) {
+                            window.location.href = '/';
+                        }
+                    }, 2000);
+                } else {
+                    console.log('🔧 [DEBUG] Registration failed:', result.error);
+                    showStatus(`Registration failed: ${result.error}`, 'danger');
+                }
+                
+            } catch (error) {
+                console.log('🔧 [DEBUG] Catch block error:', error);
+                showStatus(`Error registering template: ${error.message}`, 'danger');
+            }
+        }
+
+        function resetApp() {
+            if (confirm('This will clear all your work. Are you sure?')) {
+                currentStep = 1;
+                currentSessionId = null;
+                generatedExamples = null;
+                showStep(1);
+                document.getElementById('statusMessages').innerHTML = '';
+                document.getElementById('documentClass').value = '';
+                document.getElementById('scratchpadText').value = '';
+                updateScratchpadCounter();
+            }
+        }
+
+        // Theme management
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('theme-icon');
+            icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        // Enhanced step navigation
+        function canNavigateToStep(step) {
+            // Only allow navigation to completed or current step
+            return step <= currentStep || document.getElementById(`step${step}-indicator`).classList.contains('completed');
+        }
+
+        // Load available models from API
+        async function loadAvailableModels() {
+            try {
+                const response = await fetch('/api/models');
+                const result = await response.json();
+                
+                // Models are now configured via environment variables
+            } catch (error) {
+                console.error('Error loading available models:', error);
+                // Keep hardcoded fallback models if API fails
+            }
+        }
+
+        // Model dropdown population functions removed - models now configured via environment
+
+
+        // Get URL parameter helper
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // Load template for editing
+        async function loadTemplateForEdit(documentClass) {
+            try {
+                console.log('🔧 [DEBUG] Loading template for edit:', documentClass);
+                const response = await fetch(`/get_template/${documentClass}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    const template = result.template;
+                    console.log('🔧 [DEBUG] Template loaded for edit:', template);
+
+                    // Pre-populate the document class field
+                    document.getElementById('documentClass').value = template.document_class;
+
+                    // Pre-populate the schema
+                    const schemaTable = document.querySelector('#schemaTable tbody');
+                    schemaTable.innerHTML = ''; // Clear existing rows
+                    
+                    template.extraction_schema.forEach((attr, index) => {
+                        addSchemaRow(); // Add empty row first
+                        
+                        // Get the last added row and populate it
+                        const rows = schemaTable.querySelectorAll('tr');
+                        const lastRow = rows[rows.length - 1];
+                        const inputs = lastRow.querySelectorAll('input');
+                        const select = lastRow.querySelector('select');
+                        
+                        if (inputs.length >= 2) {
+                            inputs[0].value = attr.attribute || '';
+                            inputs[1].value = attr.description || '';
+                        }
+                        
+                        if (select) {
+                            select.value = attr.mode || 'extract';
+                        }
+                    });
+
+                    // Pre-populate output schema if exists
+                    if (template.output_schema) {
+                        document.getElementById('outputSchema').value = JSON.stringify(template.output_schema, null, 2);
+                    }
+
+                    // Pre-populate existing examples if they exist
+                    if (template.examples && template.examples.length > 0) {
+                        console.log('🔧 [DEBUG] Loading existing examples:', template.examples.length);
+                        
+                        // Set global variables for existing examples
+                        generatedExamples = template.examples;
+                        currentRLSessionId = `edit_${template.document_class}_${Date.now()}`;
+                        
+                        // Show the examples section and populate
+                        console.log('🔧 [DEBUG] Setting generatedContent display to block');
+                        const generatedContentDiv = document.getElementById('generatedContent');
+                        generatedContentDiv.style.display = 'block';
+                        generatedContentDiv.style.visibility = 'visible';
+                        generatedContentDiv.style.opacity = '1';
+                        console.log('🔧 [DEBUG] generatedContent display is now:', generatedContentDiv.style.display);
+                        document.getElementById('promptDescription').value = template.prompt_description;
+                        displayEditableExamples(template.examples);
+                        
+                        // Enable feedback controls
+                        enablePromptFeedback();
+                        
+                        // Navigate to Step 2 (Examples) automatically - preserve state
+                        showStepWithEditMode(2, false);
+                        
+                        console.log('✅ [DEBUG] Loaded existing examples in edit mode');
+                    }
+
+                    // Show edit mode indicator by updating breadcrumb
+                    const breadcrumb = document.querySelector('.breadcrumb-item.active');
+                    if (breadcrumb) {
+                        breadcrumb.innerHTML = `<i class="fas fa-edit me-2"></i>Edit Template: ${template.document_class}`;
+                    }
+
+                    console.log('✅ [DEBUG] Template pre-populated successfully');
+                } else {
+                    console.error(`Failed to load template: ${result.error}`);
+                    alert(`Failed to load template: ${result.error}`);
+                }
+            } catch (error) {
+                console.error('Error loading template for edit:', error);
+                alert(`Error loading template: ${error.message}`);
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 [DEBUG] Page loaded, initializing...');
+            // Initialize theme
+            initializeTheme();
+            
+            // Setup scratchpad counter
+            document.getElementById('scratchpadText').addEventListener('input', updateScratchpadCounter);
+            updateScratchpadCounter();
+            
+            // Initialize drag and drop
+            initializeDragDrop();
+            
+            // Add click handlers for step navigation
+            document.querySelectorAll('.step-indicator .step').forEach(stepEl => {
+                stepEl.addEventListener('click', function() {
+                    // Only allow navigation to clickable steps or active step
+                    if (this.classList.contains('clickable') || this.classList.contains('active')) {
+                        const stepNumber = parseInt(this.id.replace('step', '').replace('-indicator', ''));
+                        
+                        // In edit mode, preserve clickability for steps with content
+                        const editTemplate = getUrlParameter('edit_template');
+                        if (editTemplate && stepNumber <= 2) {
+                            // In edit mode, allow navigation between steps 1 and 2
+                            showStepWithEditMode(stepNumber, false);
+                        } else {
+                            showStep(stepNumber, false); // Preserve state when manually navigating
+                        }
+                    }
+                });
+            });
+            
+            // Initialize tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Check if we're in edit mode
+            const editTemplate = getUrlParameter('edit_template');
+            if (editTemplate) {
+                loadTemplateForEdit(editTemplate);
+            }
+            
+            // Initialize
+            loadAvailableModels();
+            updateScratchpadCounter();
+        });
+
+        // Global variable to track current prompt feedback
+        let currentPromptFeedback = null;
+
+        // Prompt Description Feedback Functions
+        function submitPromptFeedback(feedbackType) {
+            const promptDescription = document.getElementById('promptDescription').value;
+            const documentClass = document.getElementById('documentClass').value;
+            
+            if (!currentRLSessionId || !documentClass) {
+                showStatus('Please generate examples first to enable feedback.', 'warning');
+                return;
+            }
+
+            // Store current feedback globally
+            currentPromptFeedback = feedbackType;
+
+            const feedbackData = {
+                session_id: currentRLSessionId,
+                feedback_type: feedbackType,
+                feedback_source: 'prompt_description',
+                document_class: documentClass,
+                prompt_text: promptDescription,
+                timestamp: new Date().toISOString()
+            };
+
+            sendPromptFeedbackToServer(feedbackData);
+            showStatus(`Prompt description feedback: ${feedbackType}`, feedbackType === 'positive' ? 'success' : 'info');
+            
+            // Update modal status if it exists
+            updatePromptFeedbackModalStatus(feedbackType);
+        }
+
+        function updatePromptFeedbackModalStatus(feedbackType) {
+            const statusElement = document.getElementById('promptFeedbackStatus');
+            if (statusElement) {
+                const feedbackIcon = feedbackType === 'positive' ? '👍' : '👎';
+                const feedbackText = feedbackType === 'positive' ? 'Positive feedback' : 'Needs improvement';
+                statusElement.innerHTML = `AI will receive: <strong>${feedbackIcon} ${feedbackText}</strong>`;
+            }
+        }
+
+        function showPromptFeedbackModal() {
+            // Create modal if it doesn't exist
+            if (!document.getElementById('promptFeedbackModal')) {
+                createPromptFeedbackModal();
+            }
+            
+            // Reset form
+            document.querySelectorAll('#promptFeedbackModal .form-check-input').forEach(cb => cb.checked = false);
+            document.getElementById('promptFeedbackComments').value = '';
+            
+            // Update status based on current feedback
+            if (currentPromptFeedback) {
+                updatePromptFeedbackModalStatus(currentPromptFeedback);
+            } else {
+                const statusElement = document.getElementById('promptFeedbackStatus');
+                if (statusElement) {
+                    statusElement.innerHTML = 'AI will receive: <em>No feedback selected yet</em>';
+                }
+            }
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('promptFeedbackModal'));
+            modal.show();
+        }
+
+        function submitDetailedPromptFeedback() {
+            // Use the global current prompt feedback instead of modal selection
+            const rating = currentPromptFeedback;
+            
+            const issues = [];
+            document.querySelectorAll('#promptFeedbackModal .form-check-input:checked').forEach(cb => {
+                issues.push(cb.value);
+            });
+            
+            const comments = document.getElementById('promptFeedbackComments').value;
+            const promptDescription = document.getElementById('promptDescription').value;
+            const documentClass = document.getElementById('documentClass').value;
+            
+            if (!rating) {
+                showStatus('Please first click 👍 or 👎 on the main prompt feedback buttons.', 'warning');
+                return;
+            }
+
+            if (!currentRLSessionId || !documentClass) {
+                showStatus('Please generate examples first to enable feedback.', 'warning');
+                return;
+            }
+
+            const detailedFeedback = {
+                rating: rating, // 'positive' or 'negative'
+                issues: issues,
+                comments: comments,
+                improvement_suggestions: comments // For DSPy optimization
+            };
+
+            const feedbackData = {
+                session_id: currentRLSessionId,
+                feedback_type: 'detailed',
+                feedback_source: 'prompt_description',
+                document_class: documentClass,
+                prompt_text: promptDescription,
+                detailed_feedback: detailedFeedback,
+                timestamp: new Date().toISOString()
+            };
+
+            sendPromptFeedbackToServer(feedbackData);
+
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('promptFeedbackModal'));
+            modal.hide();
+
+            const feedbackIcon = rating === 'positive' ? '👍' : '👎';
+            showStatus(`Detailed prompt feedback submitted: ${feedbackIcon} ${rating}`, 'success');
+        }
+
+        async function sendPromptFeedbackToServer(feedbackData) {
+            try {
+                const response = await fetch('/feedback/prompt_description', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(feedbackData)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('✅ [RL] Prompt feedback stored successfully');
+                    // Show feedback controls if this is the first feedback
+                    showPromptFeedbackControls();
+                } else {
+                    console.error('❌ [RL] Failed to store prompt feedback:', result.error);
+                }
+            } catch (error) {
+                console.error('❌ [RL] Error storing prompt feedback:', error);
+            }
+        }
+
+        function showPromptFeedbackControls() {
+            const controls = document.getElementById('promptFeedbackControls');
+            const tip = document.getElementById('promptTip');
+            if (controls) {
+                controls.style.display = 'flex';
+                if (tip) tip.style.display = 'none';
+            }
+        }
+
+        // Show prompt feedback controls when examples are generated
+        function enablePromptFeedback() {
+            showPromptFeedbackControls();
+        }
+
+        // Step management functions (ESSENTIAL)
+        function updateStepIndicator(step) {
+            for (let i = 1; i <= 4; i++) {
+                const indicator = document.getElementById(`step${i}-indicator`);
+                if (i < step) {
+                    indicator.className = 'step completed clickable';
+                } else if (i === step) {
+                    indicator.className = 'step active';
+                } else {
+                    indicator.className = 'step';
+                }
+            }
+        }
+
+        function showStep(step, resetState = true) {
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`step${i}`).style.display = 'none';
+            }
+            document.getElementById(`step${step}`).style.display = 'block';
+            currentStep = step;
+            updateStepIndicator(step);
+            
+            // Only reset state when explicitly requested (button clicks)
+            if (resetState) {
+                resetStepState(step);
+            }
+        }
+        
+        function resetStepState(step) {
+            if (step === 2) {
+                // Reset step 2 (examples generation)
+                document.getElementById('loadingExamples').style.display = 'none';
+                document.getElementById('generatedContent').style.display = 'none';
+            } else if (step === 3) {
+                // Reset step 3 (extraction)
+                document.getElementById('loadingExtraction').style.display = 'none';
+            }
+        }
+        
+        function navigateToStep(step) {
+            // Used for manual navigation - preserves state
+            showStep(step, false);
+        }
+
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('statusMessages');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show status-message border-0 shadow-sm`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            statusDiv.appendChild(alert);
+            
+            // Auto-dismiss after 5 seconds for info messages
+            if (type === 'info' || type === 'success') {
+                setTimeout(() => {
+                    if (alert.parentNode) {
+                        alert.remove();
+                    }
+                }, 5000);
+            }
+        }
+        
+        function downloadFile(fileType) {
+            if (!currentSessionId) {
+                showStatus('No extraction session found.', 'warning');
+                return;
+            }
+            
+            const url = `/download/${currentSessionId}/${fileType}`;
+            const link = document.createElement('a');
+            link.href = url;
+            link.click();
+        }
+
+        // RL Feedback System Functions
+        let feedbackData = {}; // Store feedback for current session
+        let currentRLSessionId = null; // Track current RL session
+        
+        // Add missing functions for RL integration
+        function removeSampleText(button) {
+            const sampleGroup = button.closest('.sample-text-group');
+            sampleGroup.remove();
+            
+            // Renumber remaining samples
+            const remainingSamples = document.querySelectorAll('.sample-text-group');
+            remainingSamples.forEach((group, index) => {
+                const label = group.querySelector('small');
+                label.innerHTML = `<i class="fas fa-file-text me-1"></i> Sample ${index + 1}`;
+            });
+        }
+        
+        function removeRow(button) {
+            button.closest('tr').remove();
+        }
+        
+        function removeExtraction(exampleIndex, extractionIndex) {
+            const extractionItem = document.querySelector(`[data-example-index="${exampleIndex}"][data-extraction-index="${extractionIndex}"].extraction-item`);
+            if (extractionItem) {
+                extractionItem.remove();
+            }
+        }
+
+        function removeExample(exampleIndex) {
+            const exampleItems = document.querySelectorAll('.example-item');
+            if (exampleItems[exampleIndex]) {
+                exampleItems[exampleIndex].remove();
+            }
+        }
+
+        function addExtraction(exampleIndex) {
+            const extractionsContainer = document.querySelector(`[data-example-index="${exampleIndex}"].extractions-container`);
+            const extractionCount = extractionsContainer.children.length;
+            
+            const newExtraction = document.createElement('div');
+            newExtraction.className = 'extraction-item';
+            newExtraction.setAttribute('data-extraction-index', extractionCount);
+            newExtraction.innerHTML = `
+                <button class="btn btn-sm btn-outline-danger remove-extraction-btn" onclick="removeExtraction(${exampleIndex}, ${extractionCount})" title="Remove this extraction">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="form-label"><small>Class:</small></label>
+                        <input type="text" class="form-control form-control-sm extraction-class" placeholder="e.g., grantor" data-example-index="${exampleIndex}" data-extraction-index="${extractionCount}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label"><small>Text:</small></label>
+                        <input type="text" class="form-control form-control-sm extraction-text" placeholder="Extracted text" data-example-index="${exampleIndex}" data-extraction-index="${extractionCount}">
+                    </div>  
+                    <div class="col-md-4">
+                        <label class="form-label"><small>Attributes (JSON):</small></label>
+                        <textarea class="form-control form-control-sm extraction-attributes" rows="1" data-example-index="${exampleIndex}" data-extraction-index="${extractionCount}">{"page_number": "1"}</textarea>
+                    </div>
+                </div>
+            `;
+            extractionsContainer.appendChild(newExtraction);
+        }
+
+        function submitExampleFeedback(exampleIndex, feedbackType) {
+            console.log(`🧠 [RL] Submitting ${feedbackType} feedback for example ${exampleIndex}`);
+            
+            // Visual feedback
+            const statusSpan = document.getElementById(`feedbackStatus${exampleIndex}`);
+            const feedbackButtons = document.querySelectorAll(`[data-example-index="${exampleIndex}"] .feedback-btn`);
+            
+            // Reset all buttons
+            feedbackButtons.forEach(btn => {
+                btn.classList.remove('btn-success', 'btn-danger');
+                btn.classList.add(btn.dataset.feedback === 'positive' ? 'btn-outline-success' : 'btn-outline-danger');
+            });
+            
+            // Highlight selected button
+            const selectedBtn = document.querySelector(`[onclick="submitExampleFeedback(${exampleIndex}, '${feedbackType}')"]`);
+            if (selectedBtn) {
+                selectedBtn.classList.remove(feedbackType === 'positive' ? 'btn-outline-success' : 'btn-outline-danger');
+                selectedBtn.classList.add(feedbackType === 'positive' ? 'btn-success' : 'btn-danger');
+            }
+            
+            // Update status
+            const icon = feedbackType === 'positive' ? '👍' : '👎';
+            statusSpan.innerHTML = `<small class="text-muted">${icon} Feedback recorded</small>`;
+            
+            // Store feedback data
+            if (!feedbackData[currentRLSessionId]) {
+                feedbackData[currentRLSessionId] = {};
+            }
+            feedbackData[currentRLSessionId][`example_${exampleIndex}`] = {
+                type: feedbackType,
+                timestamp: new Date().toISOString(),
+                example: generatedExamples[exampleIndex]
+            };
+            
+            // Send feedback to server
+            sendFeedbackToServer(exampleIndex, feedbackType);
+            
+            showStatus(`Example ${exampleIndex + 1} feedback recorded: ${feedbackType}`, 'success');
+        }
+
+        function showFeedbackModal(exampleIndex) {
+            // Create modal if it doesn't exist
+            if (!document.getElementById('feedbackModal')) {
+                createFeedbackModal();
+            }
+            
+            // Set current example
+            document.getElementById('feedbackModalLabel').textContent = `Feedback for Example ${exampleIndex + 1}`;
+            document.getElementById('feedbackExampleIndex').value = exampleIndex;
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('feedbackModal'));
+            modal.show();
+        }
+        
+        function createFeedbackManagementModal() {
+            const modalHTML = `
+                <div class="modal fade" id="feedbackManagementModal" tabindex="-1" aria-labelledby="feedbackManagementModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content" style="background-color: var(--bg-secondary); color: var(--text-primary); border-color: var(--border-color);">
+                            <div class="modal-header" style="border-color: var(--border-color);">
+                                <h5 class="modal-title" id="feedbackManagementModalLabel" style="color: var(--text-primary);">
+                                    <i class="fas fa-history me-2"></i>Feedback History Management
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: var(--btn-close-filter);"></button>
+                            </div>
+                            <div class="modal-body" style="background-color: var(--bg-secondary); color: var(--text-primary);">
+                                <div class="mb-3">
+                                    <p class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Review and manage all feedback for this document class. Delete incorrect feedback to improve AI performance.
+                                    </p>
+                                </div>
+                                
+                                <div id="feedbackHistoryContainer" style="max-height: 400px; overflow-y: auto;">
+                                    <!-- Feedback entries will be loaded here -->
+                                    <div class="text-center">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer" style="border-color: var(--border-color); background-color: var(--bg-secondary);">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="refreshFeedbackHistory()" title="Refresh feedback list">
+                                    <i class="fas fa-refresh me-1"></i>Refresh
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+        
+        async function refreshFeedbackHistory() {
+            const documentClass = document.getElementById('documentClass').value.trim();
+            if (documentClass) {
+                await loadFeedbackForDocumentClass(documentClass);
+            }
+        }
+        
+        async function storeMasterFeedbackToServer(feedbackData) {
+            try {
+                const documentClass = document.getElementById('documentClass').value.trim();
+                if (!documentClass || !feedbackData) {
+                    console.log('⚠️ [RL] Cannot store master feedback: missing document class or feedback data');
+                    return;
+                }
+                
+                // Prepare master feedback for storage
+                const masterFeedbackPayload = {
+                    document_class: documentClass,
+                    feedback_type: feedbackData.type,
+                    timestamp: feedbackData.timestamp,
+                    session_id: feedbackData.session_id || Date.now(),
+                    detailed_feedback: feedbackData.detailed_feedback || null,
+                    examples: feedbackData.examples || null
+                };
+                
+                console.log('🧠 [RL] Storing master feedback to server:', masterFeedbackPayload);
+                
+                const response = await fetch('/api/feedback/master', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(masterFeedbackPayload)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    console.log('✅ [RL] Master feedback stored successfully:', result.feedback_id);
+                } else {
+                    console.error('❌ [RL] Failed to store master feedback:', result.error);
+                }
+            } catch (error) {
+                console.error('❌ [RL] Error storing master feedback:', error);
+            }
+        }
+
+        function createPromptFeedbackModal() {
+            const modalHTML = `
+                <div class="modal fade" id="promptFeedbackModal" tabindex="-1" aria-labelledby="promptFeedbackModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content" style="background-color: var(--bg-secondary); color: var(--text-primary); border-color: var(--border-color);">
+                            <div class="modal-header" style="border-color: var(--border-color);">
+                                <h5 class="modal-title" id="promptFeedbackModalLabel" style="color: var(--text-primary);">
+                                    <i class="fas fa-comment-alt me-2"></i>Prompt Description Feedback
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: var(--btn-close-filter);"></button>
+                            </div>
+                            <div class="modal-body" style="background-color: var(--bg-secondary); color: var(--text-primary);">
+                                <div class="mb-3">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <strong>Please first click 👍 or 👎 to give feedback</strong><br>
+                                        <span id="promptFeedbackStatus" class="text-muted">AI will receive: <em>No feedback selected yet</em></span>
+                                    </div>
+                                    <small class="text-muted">Add specific details below to help the AI learn from your feedback.</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">What issues did you notice? (select all that apply)</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="unclear" id="promptIssue1">
+                                        <label class="form-check-label" for="promptIssue1">
+                                            Too vague or unclear instructions
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="missing_fields" id="promptIssue2">
+                                        <label class="form-check-label" for="promptIssue2">
+                                            Missing important field descriptions
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="wrong_focus" id="promptIssue3">
+                                        <label class="form-check-label" for="promptIssue3">
+                                            Focuses on wrong aspects of the document
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="too_complex" id="promptIssue4">
+                                        <label class="form-check-label" for="promptIssue4">
+                                            Too complex or confusing
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="promptFeedbackComments" class="form-label">How would you improve this prompt description?</label>
+                                    <textarea class="form-control" id="promptFeedbackComments" rows="3" 
+                                              placeholder="Suggest specific improvements or provide your ideal prompt description..."
+                                              style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);"></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer" style="border-color: var(--border-color);">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="submitDetailedPromptFeedback()">Submit Feedback</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // No rating button functionality needed - using main thumbs up/down buttons
+        }
+
+        function createMasterFeedbackModal() {
+            const modalHTML = `
+                <div class="modal fade" id="masterFeedbackModal" tabindex="-1" aria-labelledby="masterFeedbackModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content" style="background-color: var(--bg-secondary); color: var(--text-primary); border-color: var(--border-color);">
+                            <div class="modal-header" style="border-color: var(--border-color);">
+                                <h5 class="modal-title" id="masterFeedbackModalLabel" style="color: var(--text-primary);">
+                                    <i class="fas fa-comment me-2"></i>Detailed Feedback
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: var(--btn-close-filter);"></button>
+                            </div>
+                            <div class="modal-body" style="background-color: var(--bg-secondary); color: var(--text-primary);">
+                                <!-- Show current feedback choice -->
+                                <div class="mb-3 text-center">
+                                    <div class="alert alert-info" style="background-color: var(--bg-tertiary); border-color: var(--border-color); color: var(--text-secondary);">
+                                        <h6 class="mb-2">
+                                            <span id="currentFeedbackDisplay">
+                                                <i class="fas fa-thumbs-up text-success"></i> 
+                                                You selected: <strong>Thumbs Up</strong>
+                                            </span>
+                                        </h6>
+                                        <small class="text-muted">
+                                            AI will receive <strong id="currentRatingDisplay">positive feedback (4/5 rating)</strong><br>
+                                            Add specific details below to help the AI learn from your feedback.
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">What issues do you see across the examples?</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="master-feedback-wrong-extraction">
+                                                <label class="form-check-label" for="master-feedback-wrong-extraction">Wrong text extraction</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="master-feedback-missing-fields">
+                                                <label class="form-check-label" for="master-feedback-missing-fields">Missing important fields</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="master-feedback-wrong-generation">
+                                                <label class="form-check-label" for="master-feedback-wrong-generation">Wrong text generation</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="master-feedback-incorrect-mapping">
+                                                <label class="form-check-label" for="master-feedback-incorrect-mapping">Incorrect field mapping</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="master-feedback-format-issues">
+                                                <label class="form-check-label" for="master-feedback-format-issues">Format or structure issues</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="masterFeedbackComments" class="form-label">How can these examples be improved?</label>
+                                    <textarea class="form-control" id="masterFeedbackComments" rows="4" placeholder="Describe what changes would make these examples more accurate and useful..." style="background-color: var(--bg-tertiary); color: var(--text-primary); border-color: var(--border-color);"></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer" style="border-color: var(--border-color); background-color: var(--bg-secondary);">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="submitMasterFeedback()">Add Details & Regenerate</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // No star rating needed - feedback determined by thumbs up/down choice
+        }
+
+        function submitDetailedFeedback() {
+            const exampleIndex = parseInt(document.getElementById('feedbackExampleIndex').value);
+            const rating = parseInt(document.getElementById('feedbackModal').dataset.rating) || 0;
+            const comments = document.getElementById('feedbackComments').value;
+            
+            // Collect issues
+            const issues = [];
+            if (document.getElementById('feedback-wrong-extraction').checked) issues.push('wrong-extraction');
+            if (document.getElementById('feedback-incorrect-text').checked) issues.push('incorrect-text');
+            if (document.getElementById('feedback-missing-fields').checked) issues.push('missing-fields');
+            if (document.getElementById('feedback-format-issues').checked) issues.push('format-issues');
+            
+            const detailedFeedback = {
+                rating,
+                issues,
+                comments,
+                timestamp: new Date().toISOString(),
+                example: generatedExamples[exampleIndex]
+            };
+            
+            // Store feedback
+            if (!feedbackData[currentRLSessionId]) {
+                feedbackData[currentRLSessionId] = {};
+            }
+            feedbackData[currentRLSessionId][`example_${exampleIndex}`] = {
+                ...feedbackData[currentRLSessionId][`example_${exampleIndex}`] || {},
+                detailed_feedback: detailedFeedback
+            };
+            
+            console.log('🧠 [RL] Detailed feedback:', detailedFeedback);
+            
+            // Send to server
+            sendDetailedFeedbackToServer(exampleIndex, detailedFeedback);
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('feedbackModal'));
+            modal.hide();
+            
+            // Update UI
+            const statusSpan = document.getElementById(`feedbackStatus${exampleIndex}`);
+            statusSpan.innerHTML = `<small class="text-muted">💬 Detailed feedback: ${rating}⭐</small>`;
+            
+            showStatus(`Detailed feedback submitted for Example ${exampleIndex + 1}`, 'success');
+        }
+
+        async function sendFeedbackToServer(exampleIndex, feedbackType) {
+            try {
+                const response = await fetch('/feedback/examples', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: currentRLSessionId,
+                        example_index: exampleIndex,
+                        feedback_type: feedbackType,
+                        example_data: generatedExamples[exampleIndex],
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                
+                const result = await response.json();
+                if (!result.success) {
+                    console.error('Failed to send feedback:', result.error);
+                }
+            } catch (error) {
+                console.error('Error sending feedback:', error);
+            }
+        }
+
+        async function sendDetailedFeedbackToServer(exampleIndex, detailedFeedback) {
+            try {
+                const response = await fetch('/feedback/examples/detailed', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: currentRLSessionId,
+                        example_index: exampleIndex,
+                        detailed_feedback: detailedFeedback,
+                        example_data: generatedExamples[exampleIndex]
+                    })
+                });
+                
+                const result = await response.json();
+                if (!result.success) {
+                    console.error('Failed to send detailed feedback:', result.error);
+                }
+            } catch (error) {
+                console.error('Error sending detailed feedback:', error);
+            }
+        }
+
+
+        // OVERRIDE: Enhanced getEditedExamples function 
+        function getEditedExamples() {
+            const examples = [];
+            const exampleDivs = document.querySelectorAll('.example-item');
+            
+            exampleDivs.forEach((exampleDiv, exampleIndex) => {
+                const text = exampleDiv.querySelector('.example-text').value;
+                const extractions = [];
+                
+                const extractionItems = exampleDiv.querySelectorAll('.extraction-item');
+                extractionItems.forEach(extractionItem => {
+                    const extractionClass = extractionItem.querySelector('.extraction-class').value;
+                    const extractionText = extractionItem.querySelector('.extraction-text').value;
+                    const attributesText = extractionItem.querySelector('.extraction-attributes').value;
+                    
+                    let attributes = {};
+                    try {
+                        attributes = JSON.parse(attributesText);
+                    } catch (e) {
+                        attributes = {};
+                    }
+                    
+                    if (extractionClass && extractionText) {
+                        extractions.push({
+                            extraction_class: extractionClass,
+                            extraction_text: extractionText,
+                            attributes: attributes
+                        });
+                    }
+                });
+                
+                if (text && extractions.length > 0) {
+                    examples.push({
+                        text: text,
+                        extractions: extractions
+                    });
+                }
+            });
+            
+            return examples;
+        }
+    </script>
+</body>
+</html>
