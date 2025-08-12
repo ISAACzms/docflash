@@ -1,4 +1,4 @@
-# Doc Flash ⚡ - AI-Powered Document Intelligence Platform
+# Doc Flash ⚡ - AI Document Processing Platform | LM-150A
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-green.svg)](https://fastapi.tiangolo.com)
@@ -386,8 +386,13 @@ If you use Doc Flash in your research or project, please cite:
 
 ---
 
-## 🔍 SEO Keywords
-`document processing` `OCR` `PDF extraction` `AI document analysis` `text mining` `document intelligence` `automated data extraction` `contract analysis` `invoice processing` `machine learning` `natural language processing` `FastAPI` `Python` `document automation` `intelligent OCR` `structured data extraction`
+## 🌐 Repository Information
+**GitHub Repository**: `https://github.com/LM-150A/doc-flash`  
+**Primary Keywords**: `doc-flash`, `document-ai`, `pdf-ocr`, `text-extraction`  
+**Alternative Names**: `docflash`, `doc flash`, `document flash processing`
+
+## 🔍 Search Keywords  
+`document processing` `OCR software` `PDF extraction tool` `AI document analysis` `text mining` `document intelligence platform` `automated data extraction` `contract analysis tool` `invoice processing` `machine learning document` `natural language processing` `FastAPI application` `Python OCR` `document automation` `intelligent OCR system` `structured data extraction` `PDF to text converter` `AI-powered OCR` `document parsing` `text recognition software`
 
 ---
 
