@@ -1,15 +1,22 @@
-# Doc Flash ⚡ - Intelligent Document Processing Platform
+# Doc Flash ⚡ - AI-Powered Document Intelligence Platform
 
-**Fast, intelligent document processing with the power of AI**
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-green.svg)](https://fastapi.tiangolo.com)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-Doc Flash is a modern web application built on top of Google's LangExtract framework, providing an intuitive interface for creating document extraction templates and processing both **PDF documents** (via OCR) and **plain text content** (direct input) with AI-powered extraction capabilities.
+**Transform documents into structured data with AI - OCR, text extraction, and intelligent document processing made simple**
 
-## 🚀 Features
+Doc Flash is a cutting-edge **document intelligence platform** that combines **OCR technology**, **machine learning**, and **AI-powered text extraction** to automatically process PDFs, contracts, invoices, and any text documents. Built with FastAPI and powered by Google's LangExtract framework, it offers enterprise-grade document processing with real-time learning capabilities.
 
-### 🎯 **Dual-Mode Extraction**
-- **Extract Mode**: Pull exact text spans from documents (names, dates, amounts)
-- **Generate Mode**: Create interpreted content (summaries, risk assessments, classifications)
-- **Adaptive AI**: Automatically adjusts temperature and prompting strategies based on mode
+## 🚀 Key Features
+
+### 🎯 **AI-Powered Document Processing**
+- **Smart OCR**: Convert PDFs to structured data with high accuracy
+- **Text Extraction**: Extract specific data points (names, dates, amounts, addresses)
+- **Document Classification**: Automatically categorize documents (contracts, invoices, reports)
+- **Content Generation**: Create summaries, risk assessments, and insights from documents
+- **Multi-format Support**: Process PDFs, text files, and direct text input
 
 ### 📄 **Document Processing**
 - **PDF OCR**: Upload PDFs and convert to markdown with real-time progress tracking
@@ -379,6 +386,13 @@ If you use Doc Flash in your research or project, please cite:
 
 ---
 
-**Built with ❤️ using LangExtract, FastAPI, and modern web technologies**
+## 🔍 SEO Keywords
+`document processing` `OCR` `PDF extraction` `AI document analysis` `text mining` `document intelligence` `automated data extraction` `contract analysis` `invoice processing` `machine learning` `natural language processing` `FastAPI` `Python` `document automation` `intelligent OCR` `structured data extraction`
 
-*⚡ Flash-fast document processing for the AI age*
+---
+
+**Built with ❤️ using LangExtract, FastAPI, and cutting-edge AI technologies**
+
+*⚡ Flash-fast document processing for the AI age - Transform any document into actionable data*
+
+**🌟 Star this repository if you find it useful!**
