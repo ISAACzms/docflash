@@ -1,22 +1,15 @@
-# Doc Flash ⚡ - AI Document Processing Platform | LM-150A
+# Doc Flash ⚡ - Intelligent Document Processing Platform
 
-[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-green.svg)](https://fastapi.tiangolo.com)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+**Fast, intelligent document processing with the power of AI**
 
-**Transform documents into structured data with AI - OCR, text extraction, and intelligent document processing made simple**
+Doc Flash is a modern web application built on top of Google's LangExtract framework, providing an intuitive interface for creating document extraction templates and processing both **PDF documents** (via OCR) and **plain text content** (direct input) with AI-powered extraction capabilities.
 
-Doc Flash is a cutting-edge **document intelligence platform** that combines **OCR technology**, **machine learning**, and **AI-powered text extraction** to automatically process PDFs, contracts, invoices, and any text documents. Built with FastAPI and powered by Google's LangExtract framework, it offers enterprise-grade document processing with real-time learning capabilities.
+## 🚀 Features
 
-## 🚀 Key Features
-
-### 🎯 **AI-Powered Document Processing**
-- **Smart OCR**: Convert PDFs to structured data with high accuracy
-- **Text Extraction**: Extract specific data points (names, dates, amounts, addresses)
-- **Document Classification**: Automatically categorize documents (contracts, invoices, reports)
-- **Content Generation**: Create summaries, risk assessments, and insights from documents
-- **Multi-format Support**: Process PDFs, text files, and direct text input
+### 🎯 **Dual-Mode Extraction**
+- **Extract Mode**: Pull exact text spans from documents (names, dates, amounts)
+- **Generate Mode**: Create interpreted content (summaries, risk assessments, classifications)
+- **Adaptive AI**: Automatically adjusts temperature and prompting strategies based on mode
 
 ### 📄 **Document Processing**
 - **PDF OCR**: Upload PDFs and convert to markdown with real-time progress tracking
@@ -294,6 +287,13 @@ optimal_temperature = 0.3 if has_generate_fields else 0.0
 - **Document class isolation**: Feedback only affects the specific document type
 - **Regeneration**: Click regenerate after feedback to see immediate improvements
 
+### **Advanced Feedback Memory System** 🧠
+- **Positive Feedback Preservation**: When you approve a prompt with positive feedback, it stays unchanged on regeneration
+- **Weighted Feedback History**: Recent feedback gets higher priority (1.0x) while older feedback maintains reduced influence (0.3x)
+- **Institutional Memory**: System remembers critical lessons learned while prioritizing recent user intent
+- **Quality Score Calculation**: Automatic 0.0-1.0 scoring based on feedback patterns helps DSPy make smarter optimization decisions
+- **MIPROv2 Integration**: Enhanced training examples with chronological context and quality signals for better prompt evolution
+
 ### **Performance Optimization**
 - Start with 1 extraction pass, increase only if needed
 - Use 10 workers for balanced performance
@@ -386,18 +386,6 @@ If you use Doc Flash in your research or project, please cite:
 
 ---
 
-## 🌐 Repository Information
-**GitHub Repository**: `https://github.com/LM-150A/doc-flash`  
-**Primary Keywords**: `doc-flash`, `document-ai`, `pdf-ocr`, `text-extraction`  
-**Alternative Names**: `docflash`, `doc flash`, `document flash processing`
+**Built with ❤️ using LangExtract, FastAPI, and modern web technologies**
 
-## 🔍 Search Keywords  
-`document processing` `OCR software` `PDF extraction tool` `AI document analysis` `text mining` `document intelligence platform` `automated data extraction` `contract analysis tool` `invoice processing` `machine learning document` `natural language processing` `FastAPI application` `Python OCR` `document automation` `intelligent OCR system` `structured data extraction` `PDF to text converter` `AI-powered OCR` `document parsing` `text recognition software`
-
----
-
-**Built with ❤️ using LangExtract, FastAPI, and cutting-edge AI technologies**
-
-*⚡ Flash-fast document processing for the AI age - Transform any document into actionable data*
-
-**🌟 Star this repository if you find it useful!**
+*⚡ Flash-fast document processing for the AI age*

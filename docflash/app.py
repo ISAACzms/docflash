@@ -293,10 +293,14 @@ async def register_template(request: Request):
         prompt_description = data.get("prompt_description", "")
         examples = data.get("examples", [])
         output_schema = data.get("output_schema", {})
+        domain_name = data.get("domain_name")
         # Model is now configured via environment variables
 
         if not document_class:
             raise HTTPException(status_code=400, detail="Document class is required")
+
+        if not domain_name:
+            raise HTTPException(status_code=400, detail="Domain is required")
 
         if db.template_exists(document_class):
             raise HTTPException(
@@ -310,7 +314,25 @@ async def register_template(request: Request):
             prompt_description=prompt_description,
             examples=examples,
             output_schema=output_schema,
+            domain_name=domain_name,
         )
+        
+        # Update domain statistics if domain was assigned
+        if domain_name:
+            db.update_domain_statistics()
+
+        # Save DSPy optimization if available
+        try:
+            from .dspy_integration import get_dspy_pipeline
+            dspy_pipeline = get_dspy_pipeline()
+            if dspy_pipeline and dspy_pipeline.is_compiled:
+                success = dspy_pipeline.save_optimized_model(document_class, domain_name)
+                if success:
+                    print(f"💾 [Domain Learning] Saved DSPy optimization for {document_class} in domain {domain_name}")
+                else:
+                    print(f"⚠️ [Domain Learning] Failed to save DSPy optimization for {document_class}")
+        except Exception as e:
+            print(f"⚠️ [Domain Learning] Error saving DSPy optimization: {e}")
 
         return {
             "success": True,
@@ -624,6 +646,10 @@ Transform the following LangExtract extraction results into the specified output
 async def delete_template(document_class: str):
     """Delete a registered template and associated feedback data"""
     try:
+        # Get template info before deletion to extract domain name
+        template = db.get_template(document_class)
+        domain_name = template.get("domain_name") if template else None
+        
         success = db.delete_template(document_class)
 
         if success:
@@ -644,9 +670,22 @@ async def delete_template(document_class: str):
             except Exception as e:
                 print(f"⚠️ [DSPy] Warning: Could not clean up DSPy feedback: {e}")
             
+            # Clean up DSPy saved model and metadata
+            if domain_name:
+                try:
+                    dspy_pipeline = get_dspy_pipeline()
+                    if dspy_pipeline:
+                        cleanup_success = dspy_pipeline.delete_saved_model(document_class, domain_name)
+                        if cleanup_success:
+                            print(f"🗑️ [DSPy] Cleaned up saved model for {document_class} in domain {domain_name}")
+                        else:
+                            print(f"🔍 [DSPy] No saved model found for {document_class} in domain {domain_name}")
+                except Exception as e:
+                    print(f"⚠️ [DSPy] Warning: Could not clean up saved model: {e}")
+            
             return {
                 "success": True,
-                "message": f'Template "{document_class}" and all associated feedback deleted successfully!',
+                "message": f'Template "{document_class}" and all associated data deleted successfully!',
             }
         else:
             raise HTTPException(
@@ -679,19 +718,22 @@ async def edit_template(request: Request, document_class: str = None):
 
 @app.post("/update_template")
 async def update_template(request: Request):
-    """Update an existing template"""
+    """Update an existing template (document class name cannot be changed)"""
     try:
         data = await request.json()
         original_class = data.get("original_document_class", "").strip()
-        new_class = data.get("document_class", "").strip()
+        document_class = data.get("document_class", "").strip()
         extraction_schema = data.get("extraction_schema", [])
         prompt_description = data.get("prompt_description", "")
         examples = data.get("examples", [])
         output_schema = data.get("output_schema", {})
-        # Model is now configured via environment variables
+        domain_name = data.get("domain_name")
 
-        if not original_class or not new_class:
+        if not original_class or not document_class:
             raise HTTPException(status_code=400, detail="Document class is required")
+
+        if not domain_name:
+            raise HTTPException(status_code=400, detail="Domain is required")
 
         # Check if original template exists
         if not db.template_exists(original_class):
@@ -700,56 +742,45 @@ async def update_template(request: Request):
                 detail=f'Original template "{original_class}" not found',
             )
 
-        # If name changed, check new name doesn't exist
-        if original_class != new_class and db.template_exists(new_class):
+        # Prevent document class name changes
+        if original_class != document_class:
             raise HTTPException(
-                status_code=409, detail=f'A template named "{new_class}" already exists'
+                status_code=400,
+                detail=f'Document class name cannot be changed. Template name must remain "{original_class}". To change the name, delete this template and create a new one.'
             )
 
-        # Get original template to preserve metadata
-        original_template = db.get_template(original_class)
-
-        # Delete old template if name changed
-        if original_class != new_class:
-            db.delete_template(original_class)
-            # Clean up feedback for the old document class name
-            try:
-                from docflash.rl_feedback_analyzer import feedback_analyzer
-                feedback_analyzer.delete_feedback_for_document_class(original_class)
-                print(f"🧠 [RL] Cleaned up feedback for renamed document class: {original_class} -> {new_class}")
-            except Exception as e:
-                print(f"⚠️ [RL] Warning: Could not clean up feedback for renamed class: {e}")
-            
-            try:
-                dspy_pipeline = get_dspy_pipeline()
-                if dspy_pipeline:
-                    dspy_pipeline.delete_feedback_for_document_class(original_class)
-                    print(f"🧠 [DSPy] Cleaned up DSPy feedback for renamed class: {original_class} -> {new_class}")
-            except Exception as e:
-                print(f"⚠️ [DSPy] Warning: Could not clean up DSPy feedback for renamed class: {e}")
-
-        # Register updated template
-        template_id = db.register_template(
-            document_class=new_class,
+        # Update existing template (preserves metadata automatically)
+        success = db.update_template(
+            document_class=document_class,
             extraction_schema=extraction_schema,
             prompt_description=prompt_description,
             examples=examples,
             output_schema=output_schema,
+            domain_name=domain_name,
         )
+        
+        if not success:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to update template '{document_class}'"
+            )
 
-        # Preserve usage stats if name didn't change
-        if original_class == new_class and original_template:
-            updated_template = db.get_template(new_class)
-            updated_template["usage_count"] = original_template.get("usage_count", 0)
-            updated_template["last_used"] = original_template.get("last_used")
-            updated_template["created_at"] = original_template.get("created_at")
-            db.templates[new_class] = updated_template
-            db._save_db()
+        # Save DSPy optimization after template update
+        try:
+            from .dspy_integration import get_dspy_pipeline
+            dspy_pipeline = get_dspy_pipeline()
+            if dspy_pipeline and dspy_pipeline.is_compiled:
+                success = dspy_pipeline.save_optimized_model(document_class, domain_name)
+                if success:
+                    print(f"💾 [Domain Learning] Updated DSPy optimization for {document_class} in domain {domain_name}")
+                else:
+                    print(f"⚠️ [Domain Learning] Failed to update DSPy optimization for {document_class}")
+        except Exception as e:
+            print(f"⚠️ [Domain Learning] Error updating DSPy optimization: {e}")
 
         return {
             "success": True,
-            "template_id": template_id,
-            "message": f'Template "{new_class}" updated successfully!',
+            "message": f'Template "{document_class}" updated successfully!',
         }
 
     except HTTPException:
@@ -1469,9 +1500,19 @@ async def submit_prompt_feedback(request: Request):
         
         print(f"🧠 [RL PROMPT FEEDBACK] Session: {session_id}, Document: {document_class}, Type: {feedback_type}")
         
+        # Extract domain name from template
+        domain_name = None
+        try:
+            template = db.get_template(document_class)
+            domain_name = template.get("domain_name") if template else None
+            print(f"🧠 [RL] Found domain for prompt feedback {document_class}: {domain_name}")
+        except Exception as e:
+            print(f"⚠️ [RL] Could not extract domain for prompt feedback {document_class}: {e}")
+        
         # Create example data for prompt feedback storage
         example_data = {
             "document_class": document_class,
+            "domain_name": domain_name,
             "feedback_source": feedback_source,
             "prompt_text": prompt_text,
             "timestamp": data.get("timestamp")
@@ -1678,6 +1719,196 @@ async def rl_document_classes_dashboard(request: Request):
         raise HTTPException(status_code=500, detail=f"Failed to load document classes dashboard: {str(e)}")
 
 
+# Domain management endpoints
+@app.post("/register_domain")
+async def register_domain(request: Request):
+    """Register a new domain"""
+    try:
+        data = await request.json()
+        domain_name = data.get("domain_name", "").strip()
+        description = data.get("description", "").strip()
+        
+        if not domain_name:
+            raise HTTPException(status_code=400, detail="Domain name is required")
+        
+        if db.domain_exists(domain_name):
+            raise HTTPException(
+                status_code=409,
+                detail=f'A domain named "{domain_name}" already exists'
+            )
+        
+        domain_id = db.register_domain(domain_name=domain_name, description=description)
+        
+        return {
+            "success": True,
+            "domain_id": domain_id,
+            "message": f'Domain "{domain_name}" registered successfully!'
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to register domain: {str(e)}"
+        )
+
+
+@app.get("/list_domains")
+async def list_domains():
+    """List all registered domains"""
+    try:
+        domains = db.list_domains()
+        # Update domain statistics before returning
+        db.update_domain_statistics()
+        domains = db.list_domains()  # Get updated data
+        
+        return {"success": True, "domains": domains}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to list domains: {str(e)}"
+        )
+
+
+@app.get("/get_domain/{domain_name}")
+async def get_domain(domain_name: str):
+    """Get a specific domain by name"""
+    try:
+        domain = db.get_domain(domain_name)
+        
+        if not domain:
+            raise HTTPException(
+                status_code=404,
+                detail=f'No domain found with name "{domain_name}"'
+            )
+        
+        # Get templates in this domain
+        templates = db.get_templates_by_domain(domain_name)
+        domain["templates"] = templates
+        
+        return {"success": True, "domain": domain}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to retrieve domain: {str(e)}"
+        )
+
+
+@app.put("/update_domain/{domain_name}")
+async def update_domain(domain_name: str, request: Request):
+    """Update domain description"""
+    try:
+        data = await request.json()
+        description = data.get("description", "").strip()
+        
+        if not db.domain_exists(domain_name):
+            raise HTTPException(
+                status_code=404,
+                detail=f'No domain found with name "{domain_name}"'
+            )
+        
+        success = db.update_domain(domain_name, description)
+        
+        if success:
+            return {
+                "success": True,
+                "message": f'Domain "{domain_name}" updated successfully!'
+            }
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to update domain"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to update domain: {str(e)}"
+        )
+
+
+@app.delete("/delete_domain/{domain_name}")
+async def delete_domain(domain_name: str):
+    """Delete a domain (only if no templates are assigned)"""
+    try:
+        success = db.delete_domain(domain_name)
+        
+        if success:
+            # Clean up DSPy domain optimizations
+            try:
+                dspy_pipeline = get_dspy_pipeline()
+                if dspy_pipeline:
+                    cleanup_success = dspy_pipeline.delete_domain_optimizations(domain_name)
+                    if cleanup_success:
+                        print(f"🗑️ [DSPy] Cleaned up all optimizations for domain {domain_name}")
+                    else:
+                        print(f"🔍 [DSPy] No optimizations found for domain {domain_name}")
+            except Exception as e:
+                print(f"⚠️ [DSPy] Warning: Could not clean up domain optimizations: {e}")
+            
+            return {
+                "success": True,
+                "message": f'Domain "{domain_name}" and all associated optimizations deleted successfully!'
+            }
+        else:
+            # Check if domain exists
+            if not db.domain_exists(domain_name):
+                raise HTTPException(
+                    status_code=404,
+                    detail=f'No domain found with name "{domain_name}"'
+                )
+            else:
+                # Domain exists but has templates assigned
+                templates = db.get_templates_by_domain(domain_name)
+                raise HTTPException(
+                    status_code=409,
+                    detail=f'Cannot delete domain "{domain_name}" - it has {len(templates)} templates assigned to it'
+                )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to delete domain: {str(e)}"
+        )
+
+
+@app.get("/api/domains")
+async def get_domains_api():
+    """API endpoint to get all domains (for dropdowns, etc.)"""
+    try:
+        domains = db.list_domains()
+        
+        # Return simplified format for UI components
+        domain_list = [
+            {
+                "name": domain["domain_name"],
+                "description": domain["description"],
+                "template_count": domain.get("total_templates", 0)
+            }
+            for domain in domains
+        ]
+        
+        return {
+            "success": True,
+            "domains": domain_list,
+            "total_domains": len(domain_list)
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to get domains: {str(e)}"
+        )
+
+
 # Health check endpoint
 @app.get("/health")
 async def health_check():
@@ -1774,17 +2005,28 @@ async def store_master_feedback(request: Request):
         
         from docflash.rl_feedback_analyzer import feedback_analyzer
         
+        # Extract domain name from template
+        domain_name = None
+        try:
+            template = db.get_template(document_class)
+            domain_name = template.get("domain_name") if template else None
+            print(f"🧠 [RL] Found domain for {document_class}: {domain_name}")
+        except Exception as e:
+            print(f"⚠️ [RL] Could not extract domain for {document_class}: {e}")
+        
         # Create unique feedback ID for master feedback (use timestamp for uniqueness, not session)
         from datetime import datetime
         timestamp_id = int(datetime.now().timestamp() * 1000)  # milliseconds for uniqueness
         feedback_session_id = f"master_{document_class}_{timestamp_id}"
         
-        # Prepare example data for storage
+        # Prepare example data for storage with domain and complete examples
         example_data = {
             "document_class": document_class,
+            "domain_name": domain_name,
             "feedback_source": "master",
             "session_id": session_id,
             "examples_count": len(examples) if examples else 0,
+            "examples": examples if examples else [],
             "timestamp_id": timestamp_id
         }
         

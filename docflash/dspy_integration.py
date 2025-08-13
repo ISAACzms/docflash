@@ -36,7 +36,8 @@ class DocumentExtractionSignature(dspy.Signature):
     document_type = dspy.InputField(desc="Type of document (contract, invoice, etc)")
     sample_texts = dspy.InputField(desc="Sample document texts from user")
     schema_description = dspy.InputField(desc="Extraction schema with field descriptions")
-    user_feedback_history = dspy.InputField(desc="Previous user feedback for this document type")
+    user_feedback_history = dspy.InputField(desc="Chronological user feedback with lessons learned and performance patterns")
+    feedback_quality_score = dspy.InputField(desc="Quality score based on recent feedback trends (0.0-1.0)")
     prompt_description = dspy.OutputField(desc="Clear, concise description of what to extract from this document type")
     optimized_examples = dspy.OutputField(desc="JSON list of examples, each with 'text' and 'extraction' fields")
 
@@ -48,7 +49,7 @@ class SmartDocumentExtractor(dspy.Module):
         super().__init__()
         self.generate_examples = dspy.ChainOfThought(DocumentExtractionSignature)
         
-    def forward(self, document_type, sample_texts, schema_description, user_feedback_history=""):
+    def forward(self, document_type, sample_texts, schema_description, user_feedback_history="", feedback_quality_score="0.5"):
         """Generate optimized examples using DSPy"""
         
         # Combine sample texts for DSPy processing
@@ -92,7 +93,8 @@ IMPORTANT: Generate 3-4 diverse examples using the provided sample texts. Each e
             document_type=document_type,
             sample_texts=combined_texts,
             schema_description=enhanced_schema,
-            user_feedback_history=user_feedback_history
+            user_feedback_history=user_feedback_history,
+            feedback_quality_score=feedback_quality_score
         )
         
         return result
@@ -105,9 +107,54 @@ class DSPyDocFlashPipeline:
         self.extractor = SmartDocumentExtractor()
         self.is_compiled = False
         self.compilation_count = 0
+        self.optimization_storage_path = "dspy_optimizations"
+        
+        # Ensure base optimization directory exists
+        os.makedirs(self.optimization_storage_path, exist_ok=True)
         
         # Initialize DSPy with same model as DocFlash
         self._setup_dspy_model()
+    
+    def _calculate_feedback_quality_score(self, feedback_history: List[Dict]) -> float:
+        """Calculate quality score based on recent feedback patterns (0.0-1.0)"""
+        if not feedback_history:
+            return 0.5  # neutral score
+        
+        # Sort by timestamp (newest first) and weight recent feedback more heavily
+        sorted_feedback = sorted(feedback_history, key=lambda x: x.get('timestamp', ''), reverse=True)
+        
+        # Weighting: recent feedback gets higher weight
+        weights = [1.0, 0.8, 0.6, 0.4, 0.2]  # First 5 feedback entries get decreasing weights
+        total_score = 0.0
+        total_weight = 0.0
+        
+        for i, feedback in enumerate(sorted_feedback[:5]):  # Only consider last 5 feedback entries
+            weight = weights[i] if i < len(weights) else 0.1
+            
+            # Convert feedback to numeric score
+            feedback_type = feedback.get('feedback_type', 'neutral')
+            detailed = feedback.get('detailed_feedback', {})
+            
+            if feedback_type == 'positive':
+                score = 0.9
+                # Boost score if detailed positive feedback
+                if detailed and detailed.get('rating') in ['positive', 4, 5]:
+                    score = 1.0
+            elif feedback_type == 'negative':
+                score = 0.1
+                # Check if it's a minor negative vs major negative
+                if detailed and detailed.get('rating') in [3, 'neutral']:
+                    score = 0.4
+                elif detailed and detailed.get('issues') and len(detailed['issues']) == 1:
+                    score = 0.2  # minor issue
+            else:
+                score = 0.5  # neutral/unknown
+            
+            total_score += score * weight
+            total_weight += weight
+        
+        final_score = total_score / total_weight if total_weight > 0 else 0.5
+        return min(max(final_score, 0.0), 1.0)  # Clamp to [0.0, 1.0]
         
     def _setup_dspy_model(self):
         """Initialize DSPy to use the same Azure OpenAI configuration as DocFlash"""
@@ -171,6 +218,202 @@ class DSPyDocFlashPipeline:
             print(f"❌ [DSPy] Configuration failed: {e}")
             print("🔄 [DSPy] DSPy will be disabled - using current system")
             # Don't configure DSPy - it will remain None
+    
+    def save_optimized_model(self, document_class: str, domain_name: str) -> bool:
+        """Save the current optimized DSPy model state for a template"""
+        try:
+            if not self.is_compiled:
+                print(f"⚠️ [DSPy] Cannot save uncompiled model for {document_class}")
+                return False
+            
+            # Create domain-specific directory
+            domain_path = os.path.join(self.optimization_storage_path, domain_name)
+            os.makedirs(domain_path, exist_ok=True)
+            
+            # Save model state with metadata
+            model_file = os.path.join(domain_path, f"{document_class}.json")
+            
+            # Create metadata about this optimization
+            metadata = {
+                "document_class": document_class,
+                "domain_name": domain_name,
+                "compilation_count": self.compilation_count,
+                "saved_at": datetime.now().isoformat(),
+                "dspy_version": "2.6.27",  # Current DSPy version
+                "success_metrics": self._get_model_success_metrics(document_class)
+            }
+            
+            print(f"💾 [DSPy] Saving optimized model: {model_file}")
+            
+            # Save using DSPy's state-only JSON format
+            self.extractor.save(model_file)
+            
+            # Save metadata alongside
+            metadata_file = os.path.join(domain_path, f"{document_class}_metadata.json")
+            with open(metadata_file, 'w') as f:
+                json.dump(metadata, f, indent=2)
+            
+            print(f"✅ [DSPy] Saved optimized model for {document_class} in domain {domain_name}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ [DSPy] Failed to save model for {document_class}: {e}")
+            return False
+    
+    def load_optimized_model(self, document_class: str, domain_name: str) -> bool:
+        """Load a previously optimized DSPy model state for a template"""
+        try:
+            domain_path = os.path.join(self.optimization_storage_path, domain_name)
+            model_file = os.path.join(domain_path, f"{document_class}.json")
+            metadata_file = os.path.join(domain_path, f"{document_class}_metadata.json")
+            
+            if not os.path.exists(model_file):
+                print(f"🔍 [DSPy] No saved model found for {document_class} in domain {domain_name}")
+                return False
+            
+            print(f"📂 [DSPy] Loading optimized model: {model_file}")
+            
+            # Create fresh extractor and load state
+            fresh_extractor = SmartDocumentExtractor()
+            fresh_extractor.load(model_file)
+            
+            # Replace current extractor
+            self.extractor = fresh_extractor
+            self.is_compiled = True
+            
+            # Load metadata if available
+            if os.path.exists(metadata_file):
+                with open(metadata_file, 'r') as f:
+                    metadata = json.load(f)
+                    self.compilation_count = metadata.get('compilation_count', 1)
+                    print(f"📊 [DSPy] Loaded model metadata: compiled {self.compilation_count} times, saved {metadata.get('saved_at')}")
+            
+            print(f"✅ [DSPy] Loaded optimized model for {document_class} from domain {domain_name}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ [DSPy] Failed to load model for {document_class}: {e}")
+            return False
+    
+    def get_domain_optimizations(self, domain_name: str) -> List[Dict]:
+        """Get all available optimized models in a domain with their metadata"""
+        try:
+            domain_path = os.path.join(self.optimization_storage_path, domain_name)
+            
+            if not os.path.exists(domain_path):
+                return []
+            
+            optimizations = []
+            
+            for filename in os.listdir(domain_path):
+                if filename.endswith('_metadata.json'):
+                    metadata_file = os.path.join(domain_path, filename)
+                    model_file = os.path.join(domain_path, filename.replace('_metadata.json', '.json'))
+                    
+                    if os.path.exists(model_file):
+                        with open(metadata_file, 'r') as f:
+                            metadata = json.load(f)
+                            
+                        # Add file paths for loading
+                        metadata['model_file'] = model_file
+                        metadata['metadata_file'] = metadata_file
+                        
+                        optimizations.append(metadata)
+            
+            print(f"🔍 [DSPy] Found {len(optimizations)} optimized models in domain {domain_name}")
+            return optimizations
+            
+        except Exception as e:
+            print(f"❌ [DSPy] Error getting domain optimizations for {domain_name}: {e}")
+            return []
+    
+    def delete_saved_model(self, document_class: str, domain_name: str) -> bool:
+        """Delete saved DSPy model and metadata for a specific template"""
+        try:
+            domain_path = os.path.join(self.optimization_storage_path, domain_name)
+            model_file = os.path.join(domain_path, f"{document_class}.json")
+            metadata_file = os.path.join(domain_path, f"{document_class}_metadata.json")
+            
+            deleted_files = []
+            
+            # Delete model file
+            if os.path.exists(model_file):
+                os.remove(model_file)
+                deleted_files.append("model")
+            
+            # Delete metadata file
+            if os.path.exists(metadata_file):
+                os.remove(metadata_file)
+                deleted_files.append("metadata")
+            
+            # Remove domain directory if empty
+            if os.path.exists(domain_path) and len(os.listdir(domain_path)) == 0:
+                os.rmdir(domain_path)
+                deleted_files.append("empty domain directory")
+            
+            if deleted_files:
+                print(f"🗑️ [DSPy] Deleted {', '.join(deleted_files)} for {document_class} in domain {domain_name}")
+                return True
+            else:
+                print(f"🔍 [DSPy] No saved model found to delete for {document_class} in domain {domain_name}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ [DSPy] Error deleting saved model for {document_class}: {e}")
+            return False
+
+    def delete_domain_optimizations(self, domain_name: str) -> bool:
+        """Delete all DSPy optimizations for an entire domain"""
+        try:
+            domain_path = os.path.join(self.optimization_storage_path, domain_name)
+            
+            if not os.path.exists(domain_path):
+                print(f"🔍 [DSPy] No optimizations found for domain {domain_name}")
+                return False
+            
+            # Count files before deletion
+            files_to_delete = []
+            for filename in os.listdir(domain_path):
+                if filename.endswith('.json'):
+                    files_to_delete.append(os.path.join(domain_path, filename))
+            
+            # Delete all files in domain directory
+            for file_path in files_to_delete:
+                os.remove(file_path)
+            
+            # Remove the domain directory
+            os.rmdir(domain_path)
+            
+            template_count = len([f for f in files_to_delete if not f.endswith('_metadata.json')]) 
+            print(f"🗑️ [DSPy] Deleted domain '{domain_name}' with {template_count} optimized templates")
+            return True
+            
+        except Exception as e:
+            print(f"❌ [DSPy] Error deleting domain optimizations for {domain_name}: {e}")
+            return False
+
+    def _get_model_success_metrics(self, document_class: str) -> Dict:
+        """Get success metrics for the current model from feedback analysis"""
+        try:
+            from .rl_feedback_analyzer import feedback_analyzer
+            
+            feedback_analyzer.load_stored_feedback()
+            analysis = feedback_analyzer.analyze_feedback_for_document_class(document_class)
+            
+            if analysis and analysis.get('status') != 'no_feedback':
+                return {
+                    "total_feedback": analysis.get('total_feedback', 0),
+                    "positive_feedback": analysis.get('positive_feedback', 0),
+                    "satisfaction_rate": analysis.get('positive_feedback', 0) / max(analysis.get('total_feedback', 1), 1),
+                    "common_issues": analysis.get('common_issues', {}),
+                    "has_detailed_feedback": analysis.get('detailed_feedback', 0) > 0
+                }
+            
+            return {"no_feedback": True}
+            
+        except Exception as e:
+            print(f"⚠️ [DSPy] Error getting success metrics: {e}")
+            return {"error": str(e)}
     
     def replace_generate_examples(self, document_class: str, sample_texts: List[str], 
                                   extraction_schema: List[Dict], output_schema: Dict,
@@ -252,12 +495,30 @@ class DSPyDocFlashPipeline:
             elif should_optimize:
                 print("⚠️ [DSPy] Insufficient training examples for optimization, using enhanced context")
 
-            # Generate with DSPy (now potentially optimized)
+            # Calculate feedback quality score for better DSPy optimization
+            all_feedback_for_quality = []
+            if master_feedback and isinstance(master_feedback, dict) and 'all_entries' in master_feedback:
+                all_feedback_for_quality = master_feedback['all_entries']
+            elif rl_session_id and feedback_data:
+                # Convert legacy feedback to quality calculation format
+                for key, fb_info in feedback_data.items():
+                    if key.startswith('example_') or key == 'prompt':
+                        all_feedback_for_quality.append({
+                            'feedback_type': fb_info.get('type', 'unknown'),
+                            'detailed_feedback': fb_info.get('detailed_feedback', {}),
+                            'timestamp': fb_info.get('timestamp', datetime.now().isoformat())
+                        })
+            
+            quality_score = self._calculate_feedback_quality_score(all_feedback_for_quality)
+            print(f"🧠 [DSPy] Calculated feedback quality score: {quality_score:.2f}")
+            
+            # Generate with DSPy (now potentially optimized) with quality context
             dspy_result = self.extractor(
                 document_type=document_class,
                 sample_texts=sample_texts,
                 schema_description=schema_description,
-                user_feedback_history=feedback_history
+                user_feedback_history=feedback_history,
+                feedback_quality_score=str(quality_score)
             )
             
             
@@ -405,7 +666,6 @@ class DSPyDocFlashPipeline:
         feedback_lines = []
         
         feedback_type = master_feedback.get('feedback_type') or master_feedback.get('type', 'unknown')
-        timestamp = master_feedback.get('timestamp', 'unknown')
         
         # Basic feedback
         feedback_icon = '👍' if feedback_type == 'positive' else '👎' if feedback_type == 'negative' else '❓'
@@ -466,13 +726,17 @@ class DSPyDocFlashPipeline:
                 if detailed_feedback and isinstance(detailed_feedback, dict):
                     comment_text = detailed_feedback.get('comments', 'Good extraction quality')
                 
+                # Calculate quality score for this positive feedback
+                quality_score = 0.9  # High score for positive feedback
+                
                 synthetic_example = dspy.Example(
                     document_type=document_class,
                     sample_texts=sample_texts,
                     schema_description=schema_description,
-                    user_feedback_history=f"User provided positive feedback: {comment_text}",
-                    optimized_examples=json.dumps([{"synthetic": True, "feedback": "positive"}])
-                ).with_inputs("document_type", "sample_texts", "schema_description", "user_feedback_history")
+                    user_feedback_history=f"POSITIVE REINFORCEMENT: User approved this approach - {comment_text}",
+                    feedback_quality_score=str(quality_score),
+                    optimized_examples=json.dumps([{"synthetic": True, "feedback": "positive", "quality_score": quality_score}])
+                ).with_inputs("document_type", "sample_texts", "schema_description", "user_feedback_history", "feedback_quality_score")
                 training_examples.append(synthetic_example)
                 print(f"✅ [DSPy] Created synthetic positive training example")
                 
@@ -490,13 +754,17 @@ class DSPyDocFlashPipeline:
                 
                 print("✅ [DSPy] Creating synthetic negative training example from master feedback")
                 
+                # Calculate quality score for negative feedback based on severity
+                quality_score = 0.1 if len(improvement_hints) > 2 else 0.2  # Lower score for more issues
+                
                 synthetic_example = dspy.Example(
                     document_type=document_class,
                     sample_texts=sample_texts,
                     schema_description=schema_description,
-                    user_feedback_history=f"User provided negative feedback. Issues to fix: {'; '.join(improvement_hints)}",
-                    optimized_examples=json.dumps([{"synthetic": True, "feedback": "negative", "improvements_needed": improvement_hints}])
-                ).with_inputs("document_type", "sample_texts", "schema_description", "user_feedback_history")
+                    user_feedback_history=f"CRITICAL FIXES NEEDED: {'; '.join(improvement_hints)}. These issues must be addressed.",
+                    feedback_quality_score=str(quality_score),
+                    optimized_examples=json.dumps([{"synthetic": True, "feedback": "negative", "improvements_needed": improvement_hints, "quality_score": quality_score}])
+                ).with_inputs("document_type", "sample_texts", "schema_description", "user_feedback_history", "feedback_quality_score")
                 training_examples.append(synthetic_example)
                 print(f"✅ [DSPy] Created synthetic negative training example")
                 
@@ -528,7 +796,6 @@ class DSPyDocFlashPipeline:
             for i, feedback_entry in enumerate(chronological_entries):
                 feedback_type = feedback_entry.get('feedback_type')
                 detailed_feedback = feedback_entry.get('detailed_feedback', {})
-                timestamp = feedback_entry.get('timestamp', f'entry_{i}')
                 
                 if not feedback_type:
                     continue
@@ -567,18 +834,23 @@ class DSPyDocFlashPipeline:
                         combined_history = f"LEARNED LESSONS (must maintain): {'; '.join(all_negative_lessons)}. "
                     combined_history += f"User confirmed good quality: {comment_text}"
                     
+                    # Calculate quality score - high for positive with learned lessons
+                    quality_score = self._calculate_feedback_quality_score(chronological_entries[:i+1])
+                    
                     synthetic_example = dspy.Example(
                         document_type=document_class,
                         sample_texts=sample_texts,
                         schema_description=schema_description,
                         user_feedback_history=combined_history,
+                        feedback_quality_score=str(quality_score),
                         optimized_examples=json.dumps([{
                             "synthetic": True, 
                             "feedback": "positive_with_context",
                             "maintained_lessons": all_negative_lessons,
-                            "approval": comment_text
+                            "approval": comment_text,
+                            "quality_score": quality_score
                         }])
-                    ).with_inputs("document_type", "sample_texts", "schema_description", "user_feedback_history")
+                    ).with_inputs("document_type", "sample_texts", "schema_description", "user_feedback_history", "feedback_quality_score")
                     training_examples.append(synthetic_example)
             
             # Create additional training examples that reinforce the complete learning progression
@@ -702,6 +974,8 @@ class DSPyDocFlashPipeline:
             )
             
             print("✅ [DSPy] Immediate optimization completed successfully!")
+            self.is_compiled = True
+            self.compilation_count += 1
             return True
             
         except Exception as e:

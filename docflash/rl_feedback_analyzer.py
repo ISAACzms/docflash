@@ -74,13 +74,48 @@ class FeedbackAnalyzer:
             if not relevant_feedback:
                 return {'status': 'no_feedback', 'suggestions': []}
             
+            # Sort feedback by timestamp (newest first) to prioritize recent feedback
+            relevant_feedback.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+            
+            # Separate prompt feedback from example feedback
+            prompt_feedback = [f for f in relevant_feedback if f.get('example_index') == 'prompt']
+            example_feedback = [f for f in relevant_feedback if f.get('example_index') != 'prompt' and f.get('example_index') != 'domain_init']
+            
+            # Check recent feedback for each type
+            recent_prompt_positive = False
+            recent_example_positive = False
+            
+            if prompt_feedback:
+                most_recent_prompt = prompt_feedback[0]
+                recent_prompt_positive = most_recent_prompt.get('feedback_type') == 'positive'
+            
+            if example_feedback:
+                most_recent_example = example_feedback[0]
+                recent_example_positive = most_recent_example.get('feedback_type') == 'positive'
+            
+            # Determine optimization strategy
+            optimization_strategy = self._determine_optimization_strategy(recent_prompt_positive, recent_example_positive)
+            
+            # Debug logging for transparency
+            print(f"📊 [RL] Feedback Analysis for {document_class}:")
+            print(f"  - Prompt feedback: {len(prompt_feedback)} entries, recent: {'✅ positive' if recent_prompt_positive else '❌ negative/none'}")
+            print(f"  - Example feedback: {len(example_feedback)} entries, recent: {'✅ positive' if recent_example_positive else '❌ negative/none'}")
+            print(f"  - Optimization strategy: {optimization_strategy}")
+            
             # Analyze feedback patterns
             analysis = {
                 'total_feedback': len(relevant_feedback),
-                'positive_feedback': len([f for f in relevant_feedback if f['feedback_type'] == 'positive']),
-                'negative_feedback': len([f for f in relevant_feedback if f['feedback_type'] == 'negative']),
-                'detailed_feedback': len([f for f in relevant_feedback if f.get('detailed_feedback')]),
+                'positive_feedback': len([f for f in relevant_feedback if f and f.get('feedback_type') == 'positive']),
+                'negative_feedback': len([f for f in relevant_feedback if f and f.get('feedback_type') == 'negative']),
+                'detailed_feedback': len([f for f in relevant_feedback if f and f.get('detailed_feedback')]),
+                'recent_feedback_positive': recent_prompt_positive and recent_example_positive,  # Legacy compatibility
+                'recent_prompt_positive': recent_prompt_positive,
+                'recent_example_positive': recent_example_positive,
+                'optimization_strategy': optimization_strategy,
+                'prompt_feedback_count': len(prompt_feedback),
+                'example_feedback_count': len(example_feedback),
                 'common_issues': self._identify_common_issues(relevant_feedback),
+                'example_issues': self._identify_common_issues(example_feedback),  # Issues specific to examples
                 'rating_distribution': self._analyze_ratings(relevant_feedback),
                 'optimization_suggestions': self._generate_optimization_suggestions(relevant_feedback),
                 'prompt_improvements': self._suggest_prompt_improvements(relevant_feedback)
@@ -93,10 +128,69 @@ class FeedbackAnalyzer:
             return {'status': 'error', 'suggestions': []}
     
     def optimize_prompt_for_feedback(self, original_prompt: str, feedback_analysis: Dict) -> str:
-        """Generate an improved prompt based on feedback analysis"""
+        """Generate an improved prompt based on feedback analysis with graduated optimization"""
         
         if feedback_analysis.get('status') == 'no_feedback':
             return original_prompt
+        
+        # Get optimization strategy based on separated feedback analysis
+        optimization_strategy = feedback_analysis.get('optimization_strategy', 'standard_optimization')
+        recent_prompt_positive = feedback_analysis.get('recent_prompt_positive', False)
+        recent_example_positive = feedback_analysis.get('recent_example_positive', False)
+        
+        # Handle different optimization strategies
+        if optimization_strategy == 'preserve_all':
+            print(f"🧠 [RL] Both prompt and examples received positive feedback - preserving everything")
+            return original_prompt
+            
+        elif optimization_strategy == 'graduated_optimization':
+            print(f"🧠 [RL] Prompt approved but examples had issues - applying targeted refinements")
+            return self._apply_graduated_optimization(original_prompt, feedback_analysis)
+            
+        elif optimization_strategy == 'full_optimization':
+            print(f"🧠 [RL] Prompt received negative feedback - applying full optimization")
+            return self._apply_full_optimization(original_prompt, feedback_analysis)
+            
+        else:
+            # Standard optimization (legacy behavior)
+            print(f"🧠 [RL] Applying standard optimization")
+            return self._apply_full_optimization(original_prompt, feedback_analysis)
+    
+    def _apply_graduated_optimization(self, original_prompt: str, feedback_analysis: Dict) -> str:
+        """Apply light-touch refinements to user-approved prompt based on example issues"""
+        
+        # Get issues specifically from example feedback
+        example_issues = feedback_analysis.get('example_issues', {})
+        refinements = []
+        
+        # Create targeted refinements based on what went wrong with examples
+        if example_issues.get('missing_fields', 0) > 0:
+            refinements.append("Ensure all required fields from the schema are identified and extracted.")
+            
+        if example_issues.get('wrong_extraction', 0) > 0:
+            refinements.append("Double-check that extracted values match the source text exactly.")
+            
+        if example_issues.get('format_issues', 0) > 0:
+            refinements.append("Follow the exact JSON schema format with proper data types and structure.")
+            
+        if example_issues.get('low_rating', 0) > 0:
+            refinements.append("Focus on accuracy and realistic example generation.")
+        
+        # If no specific issues found, add general quality refinement
+        if not refinements:
+            refinements.append("Ensure high-quality, accurate extractions in all examples.")
+        
+        # Apply refinements as additive improvements
+        if refinements:
+            refinement_text = "\n\nIMPORTANT: " + " ".join(refinements)
+            optimized_prompt = original_prompt + refinement_text
+            print(f"🧠 [RL] Added {len(refinements)} targeted refinements to approved prompt")
+            return optimized_prompt
+        
+        return original_prompt
+    
+    def _apply_full_optimization(self, original_prompt: str, feedback_analysis: Dict) -> str:
+        """Apply comprehensive optimization (original behavior)"""
         
         optimizations = []
         
@@ -117,7 +211,7 @@ class FeedbackAnalyzer:
         # Apply optimizations to the prompt
         optimized_prompt = self._apply_optimizations(original_prompt, optimizations)
         
-        print(f"🧠 [RL] Applied {len(optimizations)} optimizations to prompt")
+        print(f"🧠 [RL] Applied {len(optimizations)} comprehensive optimizations to prompt")
         return optimized_prompt
     
     def get_feedback_stats(self, document_class: Optional[str] = None) -> Dict[str, Any]:
@@ -201,6 +295,18 @@ class FeedbackAnalyzer:
         
         return issues
     
+    def _determine_optimization_strategy(self, recent_prompt_positive: bool, recent_example_positive: bool) -> str:
+        """Determine the optimization strategy based on recent feedback patterns"""
+        
+        if recent_prompt_positive and recent_example_positive:
+            return 'preserve_all'
+        elif recent_prompt_positive and not recent_example_positive:
+            return 'graduated_optimization'  # Option B: Keep prompt core, add refinements
+        elif not recent_prompt_positive:
+            return 'full_optimization'  # Prompt needs major work
+        else:
+            return 'standard_optimization'  # Default case
+    
     def _analyze_ratings(self, feedback_list: List[Dict]) -> Dict[str, int]:
         """Analyze rating distribution (handles both numeric 1-5 and string positive/negative ratings)"""
         
@@ -231,7 +337,7 @@ class FeedbackAnalyzer:
         suggestions = []
         
         # Check feedback patterns
-        negative_ratio = len([f for f in feedback_list if f['feedback_type'] == 'negative']) / len(feedback_list)
+        negative_ratio = len([f for f in feedback_list if f and f.get('feedback_type') == 'negative']) / len(feedback_list)
         
         if negative_ratio > 0.3:
             suggestions.append("High negative feedback rate - consider improving example quality")
@@ -239,7 +345,9 @@ class FeedbackAnalyzer:
         # Check rating patterns (handle both numeric and string ratings)
         low_ratings = []
         for f in feedback_list:
-            rating = f.get('detailed_feedback', {}).get('rating', 5)
+            if not f:
+                continue
+            rating = f.get('detailed_feedback', {}).get('rating', 5) if f.get('detailed_feedback') else 5
             # Count numeric ratings <= 2 or string 'negative' as low ratings
             if (isinstance(rating, (int, float)) and rating <= 2) or rating == 'negative':
                 low_ratings.append(f)
@@ -274,7 +382,9 @@ class FeedbackAnalyzer:
             
         # Extract specific improvements from user comments
         for feedback in feedback_list:
-            comments = feedback.get('detailed_feedback', {}).get('comments', '')
+            if not feedback:
+                continue
+            comments = feedback.get('detailed_feedback', {}).get('comments', '') if feedback.get('detailed_feedback') else ''
             if comments:
                 # Look for specific feedback patterns and convert to prompt improvements
                 if 'currency' in comments.lower() or 'usd' in comments.lower():

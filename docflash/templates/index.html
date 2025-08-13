@@ -516,6 +516,27 @@
                             <small class="text-muted">Give this document type a unique name. This will be used to register and identify your template.</small>
                         </div>
 
+                        <!-- Domain Selection Section -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label for="domainSelect" class="form-label fw-bold mb-0">Domain:</label>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="showDomainManagementModal()">
+                                    <i class="fas fa-cog me-1"></i>Manage Domains
+                                </button>
+                            </div>
+                            <select class="form-select" id="domainSelect" required onchange="onDomainSelectionChange()" onblur="validateDomainSelection()">
+                                <option value="">-- Select a Domain --</option>
+                                <!-- Domain options will be loaded here -->
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select a domain to organize this template.
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                <span id="domainHelpText">Select a domain to leverage patterns from similar document types for smarter example generation.</span>
+                            </small>
+                        </div>
+
                         <!-- PDF Upload Section -->
                         <div class="mb-4">
                             <label class="form-label fw-bold">Upload PDF Document:</label>
@@ -1736,6 +1757,19 @@ The Service Provider agrees to provide digital marketing consulting services for
             }
         }
 
+        function validateDomainSelection() {
+            const domainSelect = document.getElementById('domainSelect');
+            const selectedDomain = domainSelect.value;
+            
+            if (!selectedDomain) {
+                domainSelect.classList.add('is-invalid');
+                domainSelect.classList.remove('is-valid');
+            } else {
+                domainSelect.classList.add('is-valid');
+                domainSelect.classList.remove('is-invalid');
+            }
+        }
+
         // Main workflow functions
         async function generateExamples() {
             const documentClass = document.getElementById('documentClass').value.trim();
@@ -1750,6 +1784,17 @@ The Service Provider agrees to provide digital marketing consulting services for
                 documentClassInput.classList.remove('is-valid');
                 showStatus('Please enter a Document Class name before proceeding.', 'warning');
                 documentClassInput.focus();
+                return;
+            }
+
+            // Validate Domain Selection is provided
+            const selectedDomain = document.getElementById('domainSelect').value;
+            if (!selectedDomain) {
+                const domainSelect = document.getElementById('domainSelect');
+                domainSelect.classList.add('is-invalid');
+                domainSelect.classList.remove('is-valid');
+                showStatus('Please select a domain before proceeding.', 'warning');
+                domainSelect.focus();
                 return;
             }
 
@@ -2025,6 +2070,15 @@ The Service Provider agrees to provide digital marketing consulting services for
                 showStatus('Please enter a document class name before registering.', 'warning');
                 return;
             }
+
+            // Validate domain selection
+            const selectedDomain = document.getElementById('domainSelect').value;
+            if (!selectedDomain) {
+                console.log('🔧 [DEBUG] No domain selected');
+                showStatus('Please select a domain before registering the template.', 'warning');
+                document.getElementById('domainSelect').focus();
+                return;
+            }
             
             console.log('🔧 [DEBUG] Generated examples:', generatedExamples ? generatedExamples.length : 'undefined');
             if (!generatedExamples || generatedExamples.length === 0) {
@@ -2093,12 +2147,14 @@ The Service Provider agrees to provide digital marketing consulting services for
                     console.log('🔧 [DEBUG] First example extractions:', editedExamples[0].extractions?.length);
                 }
                 
+                const selectedDomain = document.getElementById('domainSelect').value;
                 const requestData = {
                     document_class: documentClass,
                     extraction_schema: extractionSchema,
                     prompt_description: promptDescription,
                     examples: editedExamples,
-                    output_schema: parsedOutputSchema
+                    output_schema: parsedOutputSchema,
+                    domain_name: selectedDomain || null
                 };
                 console.log('🔧 [DEBUG] Full request data:', requestData);
                 
@@ -2187,6 +2243,105 @@ The Service Provider agrees to provide digital marketing consulting services for
             }
         }
 
+        // Update existing template function
+        async function updateExistingTemplate() {
+            console.log('🔧 [DEBUG] Update Template button clicked');
+            const documentClass = document.getElementById('documentClass').value.trim();
+            console.log('🔧 [DEBUG] Document class:', documentClass);
+            
+            if (!documentClass) {
+                console.log('🔧 [DEBUG] No document class provided');
+                showStatus('Document class is required.', 'warning');
+                return;
+            }
+
+            // Validate domain selection
+            const selectedDomain = document.getElementById('domainSelect').value;
+            if (!selectedDomain) {
+                console.log('🔧 [DEBUG] No domain selected');
+                showStatus('Please select a domain before updating the template.', 'warning');
+                document.getElementById('domainSelect').focus();
+                return;
+            }
+            
+            console.log('🔧 [DEBUG] Generated examples:', generatedExamples ? generatedExamples.length : 'undefined');
+            if (!generatedExamples || generatedExamples.length === 0) {
+                console.log('🔧 [DEBUG] No generated examples available');
+                showStatus('No examples to update. Please generate examples first.', 'warning');
+                return;
+            }
+            
+            // Collect all the configuration data
+            console.log('🔧 [DEBUG] Collecting configuration data...');
+            let extractionSchema;
+            try {
+                extractionSchema = getSchemaData();
+                console.log('🔧 [DEBUG] Schema data:', extractionSchema);
+            } catch (error) {
+                console.error('🔧 [ERROR] getSchemaData() failed:', error);
+                showStatus('Error getting schema data. Please check your schema fields.', 'danger');
+                return;
+            }
+            
+            const promptDescElement = document.getElementById('promptDescription');
+            const outputSchemaElement = document.getElementById('outputSchema');
+            
+            if (!promptDescElement || !outputSchemaElement) {
+                showStatus('UI Error: Required fields not found. Please refresh the page.', 'danger');
+                return;
+            }
+            
+            const promptDescription = promptDescElement.value;
+            const outputSchema = outputSchemaElement.value;
+            
+            let parsedOutputSchema = {};
+            try {
+                parsedOutputSchema = JSON.parse(outputSchema);
+            } catch (e) {
+                showStatus('Invalid JSON in output schema. Please fix before updating.', 'warning');
+                return;
+            }
+            
+            try {
+                console.log('🔧 [DEBUG] Preparing update request...');
+                const editedExamples = getEditedExamples();
+                
+                const requestData = {
+                    original_document_class: documentClass,
+                    document_class: documentClass,
+                    extraction_schema: extractionSchema,
+                    prompt_description: promptDescription,
+                    examples: editedExamples,
+                    output_schema: parsedOutputSchema,
+                    domain_name: selectedDomain
+                };
+                
+                console.log('🔧 [DEBUG] Sending update request to /update_template...');
+                const response = await fetch('/update_template', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                console.log('🔧 [DEBUG] Update response status:', response.status);
+                const result = await response.json();
+                console.log('🔧 [DEBUG] Update result:', result);
+                
+                if (result.success) {
+                    showStatus(`✅ Template "${documentClass}" updated successfully!`, 'success');
+                } else {
+                    console.error('🔧 [ERROR] Update failed:', result);
+                    showStatus(`Failed to update template: ${result.detail || result.error}`, 'danger');
+                }
+                
+            } catch (error) {
+                console.error('🔧 [ERROR] Update request failed:', error);
+                showStatus('Error updating template. Please try again.', 'danger');
+            }
+        }
+
         // Model dropdown population functions removed - models now configured via environment
 
 
@@ -2209,8 +2364,34 @@ The Service Provider agrees to provide digital marketing consulting services for
                     const template = result.template;
                     console.log('🔧 [DEBUG] Template loaded for edit:', template);
 
-                    // Pre-populate the document class field
-                    document.getElementById('documentClass').value = template.document_class;
+                    // Pre-populate and DISABLE the document class field
+                    const documentClassField = document.getElementById('documentClass');
+                    documentClassField.value = template.document_class;
+                    documentClassField.readOnly = true;
+                    documentClassField.style.backgroundColor = 'var(--bg-tertiary)';
+                    documentClassField.style.cursor = 'not-allowed';
+                    
+                    // Add helper text
+                    const helperText = document.createElement('small');
+                    helperText.className = 'text-muted';
+                    helperText.textContent = 'Document class cannot be changed when editing';
+                    helperText.id = 'editModeHelper';
+                    if (!document.getElementById('editModeHelper')) {
+                        documentClassField.parentNode.appendChild(helperText);
+                    }
+                    
+                    // Pre-populate the domain selection (keep enabled for editing)
+                    if (template.domain_name) {
+                        document.getElementById('domainSelect').value = template.domain_name;
+                        console.log('🔧 [DEBUG] Pre-populated domain:', template.domain_name);
+                    }
+                    
+                    // Change register button to update button
+                    const registerButton = document.querySelector('button[onclick="registerTemplate()"]');
+                    if (registerButton) {
+                        registerButton.innerHTML = '<i class="fas fa-save me-2"></i> Update Template';
+                        registerButton.onclick = updateExistingTemplate;
+                    }
 
                     // Pre-populate the schema
                     const schemaTable = document.querySelector('#schemaTable tbody');
@@ -2289,6 +2470,8 @@ The Service Provider agrees to provide digital marketing consulting services for
             console.log('🔧 [DEBUG] Page loaded, initializing...');
             // Initialize theme
             initializeTheme();
+            // Load available domains
+            loadDomains();
             
             // Setup scratchpad counter
             document.getElementById('scratchpadText').addEventListener('input', updateScratchpadCounter);
@@ -3043,6 +3226,301 @@ The Service Provider agrees to provide digital marketing consulting services for
             });
             
             return examples;
+        }
+
+        // Domain Management Functions
+        async function loadDomains() {
+            try {
+                const response = await fetch('/api/domains');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const domainSelect = document.getElementById('domainSelect');
+                    const currentValue = domainSelect.value; // Preserve selection
+                    
+                    // Clear existing options except the placeholder option
+                    domainSelect.innerHTML = '<option value="">-- Select a Domain --</option>';
+                    
+                    // Add domain options
+                    result.domains.forEach(domain => {
+                        const option = document.createElement('option');
+                        option.value = domain.name;
+                        option.textContent = `${domain.name} (${domain.template_count} templates)`;
+                        if (domain.description) {
+                            option.title = domain.description;
+                        }
+                        domainSelect.appendChild(option);
+                    });
+                    
+                    // Restore selection if it still exists
+                    if (currentValue) {
+                        domainSelect.value = currentValue;
+                    }
+                    
+                    // Update help text
+                    const helpText = document.getElementById('domainHelpText');
+                    if (result.domains.length > 0) {
+                        helpText.textContent = `Choose from ${result.domains.length} available domains to leverage similar document patterns.`;
+                    } else {
+                        helpText.innerHTML = '<strong>No domains available.</strong> Click "Manage Domains" to create your first domain.';
+                    }
+                    
+                    console.log(`📋 Loaded ${result.domains.length} domains`);
+                } else {
+                    console.error('Failed to load domains:', result.error);
+                }
+            } catch (error) {
+                console.error('Error loading domains:', error);
+            }
+        }
+
+        function onDomainSelectionChange() {
+            const domainSelect = document.getElementById('domainSelect');
+            const selectedDomain = domainSelect.value;
+            
+            // Validate selection
+            validateDomainSelection();
+            
+            if (selectedDomain) {
+                console.log(`📂 Domain selected: ${selectedDomain}`);
+                showStatus(`Domain "${selectedDomain}" selected. Smart suggestions will be based on similar document types in this domain.`, 'info');
+            } else {
+                console.log('📂 No domain selected');
+            }
+        }
+
+        async function showDomainManagementModal() {
+            // Create modal if it doesn't exist
+            if (!document.getElementById('domainManagementModal')) {
+                createDomainManagementModal();
+            }
+            
+            // Load current domains into the management table
+            await loadDomainsIntoManagementModal();
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('domainManagementModal'));
+            modal.show();
+        }
+
+        function createDomainManagementModal() {
+            const modalHTML = `
+                <div class="modal fade" id="domainManagementModal" tabindex="-1" aria-labelledby="domainManagementModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content" style="background-color: var(--bg-primary); color: var(--text-primary);">
+                            <div class="modal-header" style="border-bottom: 1px solid var(--border-light);">
+                                <h5 class="modal-title" id="domainManagementModalLabel">
+                                    <i class="fas fa-cogs me-2"></i>Domain Management
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: var(--btn-close-filter);"></button>
+                            </div>
+                            <div class="modal-body" style="background-color: var(--bg-secondary); color: var(--text-primary);">
+                                <!-- Create New Domain Section -->
+                                <div class="card mb-4" style="background-color: var(--bg-primary); border: 1px solid var(--border-light);">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-plus me-2"></i>Create New Domain</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <input type="text" class="form-control" id="newDomainName" placeholder="Domain name (e.g., Invoices)" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control" id="newDomainDescription" placeholder="Description (optional)">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="button" class="btn btn-primary w-100" onclick="createNewDomain()">
+                                                    <i class="fas fa-plus"></i> Create
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Existing Domains Section -->
+                                <div class="card" style="background-color: var(--bg-primary); border: 1px solid var(--border-light);">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-list me-2"></i>Existing Domains</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="domainsTableContainer">
+                                            <!-- Domains table will be loaded here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer" style="border-top: 1px solid var(--border-light);">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        async function loadDomainsIntoManagementModal() {
+            try {
+                const response = await fetch('/list_domains');
+                const result = await response.json();
+                
+                const tableContainer = document.getElementById('domainsTableContainer');
+                
+                if (!result.success || !result.domains || result.domains.length === 0) {
+                    tableContainer.innerHTML = '<p class="text-muted text-center">No domains created yet. Create your first domain above.</p>';
+                    return;
+                }
+                
+                let tableHTML = `
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Domain Name</th>
+                                    <th>Description</th>
+                                    <th>Templates</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                result.domains.forEach(domain => {
+                    const createdDate = new Date(domain.created_at).toLocaleDateString();
+                    const templateCount = domain.total_templates || 0;
+                    const canDelete = templateCount === 0;
+                    
+                    tableHTML += `
+                        <tr>
+                            <td><strong>${domain.domain_name}</strong></td>
+                            <td>${domain.description || '<em class="text-muted">No description</em>'}</td>
+                            <td>
+                                <span class="badge bg-info">${templateCount} templates</span>
+                            </td>
+                            <td>${createdDate}</td>
+                            <td>
+                                <button type="button" class="btn btn-outline-primary btn-sm me-1" onclick="editDomain('${domain.domain_name}', '${(domain.description || '').replace(/'/g, "\\'")}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                ${canDelete ? 
+                                    `<button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteDomain('${domain.domain_name}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>` :
+                                    `<button type="button" class="btn btn-outline-secondary btn-sm" disabled title="Cannot delete domain with assigned templates">
+                                        <i class="fas fa-lock"></i>
+                                    </button>`
+                                }
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tableHTML += '</tbody></table></div>';
+                tableContainer.innerHTML = tableHTML;
+                
+            } catch (error) {
+                console.error('Error loading domains for management:', error);
+                document.getElementById('domainsTableContainer').innerHTML = '<p class="text-danger text-center">Error loading domains.</p>';
+            }
+        }
+
+        async function createNewDomain() {
+            const domainName = document.getElementById('newDomainName').value.trim();
+            const domainDescription = document.getElementById('newDomainDescription').value.trim();
+            
+            if (!domainName) {
+                showStatus('Domain name is required.', 'warning');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/register_domain', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        domain_name: domainName,
+                        description: domainDescription
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus(`Domain "${domainName}" created successfully!`, 'success');
+                    
+                    // Clear form
+                    document.getElementById('newDomainName').value = '';
+                    document.getElementById('newDomainDescription').value = '';
+                    
+                    // Reload domains in modal and dropdown
+                    await loadDomainsIntoManagementModal();
+                    await loadDomains();
+                } else {
+                    showStatus(`Failed to create domain: ${result.error}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error creating domain:', error);
+                showStatus('Error creating domain.', 'danger');
+            }
+        }
+
+        async function editDomain(domainName, currentDescription) {
+            const newDescription = prompt(`Edit description for domain "${domainName}":`, currentDescription);
+            
+            if (newDescription === null) {
+                return; // User cancelled
+            }
+            
+            try {
+                const response = await fetch(`/update_domain/${encodeURIComponent(domainName)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        description: newDescription
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus(`Domain "${domainName}" updated successfully!`, 'success');
+                    await loadDomainsIntoManagementModal();
+                } else {
+                    showStatus(`Failed to update domain: ${result.error}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error updating domain:', error);
+                showStatus('Error updating domain.', 'danger');
+            }
+        }
+
+        async function deleteDomain(domainName) {
+            if (!confirm(`Are you sure you want to delete the domain "${domainName}"?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/delete_domain/${encodeURIComponent(domainName)}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus(`Domain "${domainName}" deleted successfully!`, 'success');
+                    
+                    // Reload domains in modal and dropdown
+                    await loadDomainsIntoManagementModal();
+                    await loadDomains();
+                } else {
+                    showStatus(`Failed to delete domain: ${result.error}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error deleting domain:', error);
+                showStatus('Error deleting domain.', 'danger');
+            }
         }
     </script>
 </body>

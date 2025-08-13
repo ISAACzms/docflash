@@ -250,13 +250,33 @@
                                 <h5><i class="fas fa-info-circle me-2"></i>Basic Information</h5>
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="documentClass" class="form-label">Document Class</label>
+                                        <label for="documentClass" class="form-label">Document Class *</label>
                                         <input type="text" class="form-control" id="documentClass" readonly>
                                         <small class="text-muted">Document class cannot be changed after creation</small>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="templateUsage" class="form-label">Usage Count</label>
                                         <input type="text" class="form-control" id="templateUsage" readonly>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="domainSelect" class="form-label">Domain *</label>
+                                        <div class="d-flex">
+                                            <select class="form-select" id="domainSelect" required onchange="onDomainSelectionChange()" onblur="validateDomainSelection()">
+                                                <option value="">-- Select a Domain --</option>
+                                            </select>
+                                            <button type="button" class="btn btn-outline-secondary ms-2" data-bs-toggle="modal" data-bs-target="#domainManagementModal" title="Manage Domains">
+                                                <i class="fas fa-cog"></i>
+                                            </button>
+                                        </div>
+                                        <div class="invalid-feedback" id="domainSelectFeedback">
+                                            Please select a domain for this template.
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="templateCreated" class="form-label">Created</label>
+                                        <input type="text" class="form-control" id="templateCreated" readonly>
                                     </div>
                                 </div>
                                 <div class="mb-3">
@@ -326,6 +346,60 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Domain Management Modal -->
+    <div class="modal fade" id="domainManagementModal" tabindex="-1" aria-labelledby="domainManagementModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="domainManagementModalLabel">
+                        <i class="fas fa-cog me-2"></i>Domain Management
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Add New Domain -->
+                    <div class="mb-4">
+                        <h6><i class="fas fa-plus me-2"></i>Add New Domain</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input type="text" class="form-control" id="newDomainName" placeholder="Domain name (e.g., Invoices)">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" class="form-control" id="newDomainDescription" placeholder="Description (optional)">
+                            </div>
+                        </div>
+                        <button class="btn btn-success btn-sm mt-2" onclick="addNewDomain()">
+                            <i class="fas fa-plus me-1"></i> Add Domain
+                        </button>
+                    </div>
+
+                    <!-- Existing Domains -->
+                    <div class="mb-3">
+                        <h6><i class="fas fa-list me-2"></i>Existing Domains</h6>
+                        <div id="domainsList" class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Domain Name</th>
+                                        <th>Description</th>
+                                        <th>Templates</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="domainsTableBody">
+                                    <!-- Domains will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -423,7 +497,15 @@
             document.getElementById('templateName').textContent = template.document_class;
             document.getElementById('documentClass').value = template.document_class;
             document.getElementById('templateUsage').value = `${template.usage_count || 0} times`;
+            document.getElementById('templateCreated').value = template.created_at ? new Date(template.created_at).toLocaleDateString() : 'Unknown';
             document.getElementById('promptDescription').value = template.prompt_description || '';
+            
+            // Load domains and set current domain
+            loadDomains().then(() => {
+                if (template.domain_name) {
+                    document.getElementById('domainSelect').value = template.domain_name;
+                }
+            });
             
             // Output schema
             if (template.output_schema) {
@@ -663,11 +745,18 @@
         // Save template
         async function saveTemplate() {
             const documentClass = document.getElementById('documentClass').value.trim();
+            const domainName = document.getElementById('domainSelect').value;
             const promptDescription = document.getElementById('promptDescription').value;
             const outputSchemaText = document.getElementById('outputSchema').value;
             
             if (!documentClass) {
                 showStatus('Document class is required.', 'warning');
+                return;
+            }
+
+            if (!domainName) {
+                showStatus('Domain selection is required.', 'warning');
+                document.getElementById('domainSelect').classList.add('is-invalid');
                 return;
             }
 
@@ -700,6 +789,7 @@
                     body: JSON.stringify({
                         original_document_class: originalDocumentClass,
                         document_class: documentClass,
+                        domain_name: domainName,
                         extraction_schema: extractionSchema,
                         prompt_description: promptDescription,
                         examples: examples,
@@ -719,6 +809,139 @@
                 console.error('Error saving template:', error);
                 showStatus(`Error saving template: ${error.message}`, 'danger');
             }
+        }
+
+        // Domain Management Functions
+        async function loadDomains() {
+            try {
+                const response = await fetch('/api/domains');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const domainSelect = document.getElementById('domainSelect');
+                    
+                    // Clear existing options except the first one
+                    const firstOption = domainSelect.querySelector('option[value=""]');
+                    domainSelect.innerHTML = '';
+                    domainSelect.appendChild(firstOption);
+                    
+                    // Add domain options
+                    result.domains.forEach(domain => {
+                        const option = document.createElement('option');
+                        option.value = domain.name;
+                        option.textContent = domain.name;
+                        domainSelect.appendChild(option);
+                    });
+                    
+                    // Populate domains table in modal
+                    populateDomainsTable(result.domains);
+                }
+            } catch (error) {
+                console.error('Error loading domains:', error);
+                showStatus('Error loading domains. Please refresh the page.', 'warning');
+            }
+        }
+
+        function populateDomainsTable(domains) {
+            const tbody = document.getElementById('domainsTableBody');
+            tbody.innerHTML = '';
+            
+            domains.forEach(domain => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${domain.name}</td>
+                    <td>${domain.description || '-'}</td>
+                    <td>${domain.template_count || 0}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteDomain('${domain.name}', ${domain.template_count || 0})" title="Delete Domain">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function addNewDomain() {
+            const nameInput = document.getElementById('newDomainName');
+            const descInput = document.getElementById('newDomainDescription');
+            
+            const domainName = nameInput.value.trim();
+            const description = descInput.value.trim();
+            
+            if (!domainName) {
+                alert('Domain name is required.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/register_domain', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        domain_name: domainName,
+                        description: description
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    nameInput.value = '';
+                    descInput.value = '';
+                    await loadDomains();
+                    showStatus(`✅ Domain "${domainName}" added successfully!`, 'success');
+                } else {
+                    alert(`Failed to add domain: ${result.detail}`);
+                }
+            } catch (error) {
+                console.error('Error adding domain:', error);
+                alert('Error adding domain. Please try again.');
+            }
+        }
+
+        async function deleteDomain(domainName, templateCount) {
+            if (templateCount > 0) {
+                alert(`Cannot delete domain "${domainName}" because it has ${templateCount} templates assigned to it.`);
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to delete the domain "${domainName}"?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/delete_domain/${domainName}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    await loadDomains();
+                    showStatus(`✅ ${result.message}`, 'success');
+                } else {
+                    alert(`Failed to delete domain: ${result.detail}`);
+                }
+            } catch (error) {
+                console.error('Error deleting domain:', error);
+                alert('Error deleting domain. Please try again.');
+            }
+        }
+
+        function onDomainSelectionChange() {
+            const domainSelect = document.getElementById('domainSelect');
+            domainSelect.classList.remove('is-invalid');
+        }
+
+        function validateDomainSelection() {
+            const domainSelect = document.getElementById('domainSelect');
+            if (!domainSelect.value) {
+                domainSelect.classList.add('is-invalid');
+                return false;
+            }
+            domainSelect.classList.remove('is-invalid');
+            return true;
         }
 
         // Go back
