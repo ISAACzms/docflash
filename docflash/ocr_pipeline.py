@@ -2,7 +2,7 @@
 """
 PDF OCR Pipeline for Doc Flash
 Converts PDF -> Images -> OCR -> Markdown with configurable LLM providers
-Supports Azure OpenAI, OpenAI, Google Gemini, and Ollama
+Supports Azure OpenAI, OpenAI, Google Gemini, Ollama, and vLLM service
 """
 import asyncio
 import base64
