@@ -2,7 +2,7 @@
 """
 PDF OCR Pipeline for Doc Flash
 Converts PDF -> Images -> OCR -> Markdown with configurable LLM providers
-Supports Azure OpenAI, OpenAI, and Google Gemini
+Supports Azure OpenAI, OpenAI, Google Gemini, and Ollama
 """
 import asyncio
 import base64
@@ -369,6 +369,83 @@ class PDFOCRPipeline:
             print(f"❌ Gemini OCR error for page {page_num}: {e}")
             return page_num, f"[OCR ERROR FOR PAGE {page_num}: {str(e)}]"
 
+    async def convert_image_to_markdown_ollama(
+        self, image_path: str, page_num: int
+    ) -> Tuple[int, str]:
+        """Convert image to markdown using Ollama"""
+
+        DOCEXT_PROMPT = """Extract the text from the above document as if you were reading it naturally. Follow these formatting guidelines:
+
+**Text Formatting:**
+- Return tables in HTML format
+- Return equations in LaTeX representation  
+- Use ☐ and ☑ for check boxes
+- Preserve paragraph structure and line breaks
+
+**Special Elements:**
+- Watermarks: <watermark>OFFICIAL COPY</watermark>
+- Page numbers: <page_number>14</page_number> or <page_number>9/22</page_number>
+- Images: If caption present, use <img>caption text</img>. If no caption, add brief description <img>description of image</img>
+
+**Handwritten Content:**
+- Clear handwriting: Transcribe normally
+- Unclear handwriting: Transcribe readable parts, mark unclear sections as [unclear]
+- Signatures: Mark as [SIGNATURE] or [SIGNATURE: name] if name is legible
+- Handwritten dates: Transcribe if clear, otherwise use [DATE: partial_date] format
+
+**Stamps and Seals:**
+- Official stamps: [STAMP: description]
+- Notary seals: [NOTARY SEAL]
+- Embossed elements: [EMBOSSED: description]
+
+**Quality Guidelines:**
+- Focus on clearly readable text
+- Do not attempt to transcribe illegible or heavily stylized elements
+- Mark ambiguous content appropriately rather than producing garbled output
+- Maintain document structure and hierarchy"""
+
+        try:
+            # Import requests for Ollama API
+            import requests
+            import base64
+
+            # Encode image to base64
+            with open(image_path, "rb") as f:
+                base64_image = base64.b64encode(f.read()).decode("utf-8")
+
+            # Create Ollama API payload
+            payload = {
+                "model": config.ocr_config.model_id,
+                "prompt": f"[img]{base64_image}[/img]\n\n{DOCEXT_PROMPT}",
+                "stream": False,
+                "options": {
+                    "temperature": config.ocr_config.temperature,
+                }
+            }
+
+            # Make API call to Ollama
+            response = requests.post(
+                f"{config.ocr_config.ollama_base_url}/api/generate",
+                json=payload,
+                timeout=300  # 5 minute timeout for vision models
+            )
+            
+            response.raise_for_status()
+            result = response.json()
+            
+            if result.get("response"):
+                markdown = result["response"]
+                markdown = self.cleanup_ocr_artifacts(markdown)
+                print(f"✅ OCR completed for page {page_num} using Ollama")
+                return page_num, markdown
+            else:
+                print(f"❌ No response from Ollama for page {page_num}")
+                return page_num, f"[OCR FAILED FOR PAGE {page_num}]"
+
+        except Exception as e:
+            print(f"❌ Ollama OCR error for page {page_num}: {e}")
+            return page_num, f"[OCR ERROR FOR PAGE {page_num}: {str(e)}]"
+
     async def convert_image_to_markdown(
         self, session: aiohttp.ClientSession, image_path: str, page_num: int
     ) -> Tuple[int, str]:
@@ -380,6 +457,8 @@ class PDFOCRPipeline:
                 return await self.convert_image_to_markdown_openai(image_path, page_num)
             elif self.provider_type == "gemini":
                 return await self.convert_image_to_markdown_gemini(image_path, page_num)
+            elif self.provider_type == "ollama":
+                return await self.convert_image_to_markdown_ollama(image_path, page_num)
 
         # Fallback to original vLLM service
         return await self.convert_image_to_markdown_vllm(session, image_path, page_num)
