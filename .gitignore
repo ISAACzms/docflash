@@ -211,6 +211,7 @@ uploads/
 outputs/
 *.pdf
 *.txt
+!requirements.txt
 *.docx
 
 # Security reports

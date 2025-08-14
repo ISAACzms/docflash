@@ -1,0 +1,33 @@
+# Core dependencies #
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+langextract>=1.0.5
+python-dotenv>=1.0.0
+python-multipart>=0.0.6
+jinja2>=3.1.2
+aiofiles>=23.2.0
+
+# DSPy for automatic prompt optimization (optional but recommended)
+dspy-ai>=2.6.27
+
+# Azure dependencies (optional - only needed if using Azure OpenAI)
+azure-identity>=1.15.0
+
+# OpenAI dependencies (optional - only needed if using OpenAI)
+openai>=1.0.0
+
+# Google AI dependencies (optional - only needed if using Gemini)
+google-generativeai>=0.3.0
+
+# Additional utilities
+requests>=2.31.0
+pdf2image>=1.17.0
+Pillow>=11.0.0
+pikepdf>=8.0.0
+opencv-python-headless>=4.8.0
+pytesseract>=0.3.10
+beautifulsoup4>=4.12.0
+
+# Note: All dependencies are designed to work together seamlessly
+# DSPy integration provides advanced AI features but is optional
+# The system will work without DSPy, just without automatic prompt optimization
