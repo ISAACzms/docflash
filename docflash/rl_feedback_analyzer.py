@@ -1,5 +1,5 @@
 """
-Reinforcement Learning Feedback Analyzer
+Prompt Learning Feedback Analyzer
 Analyzes user feedback and optimizes prompts for better example generation
 """
 

@@ -1,391 +1,191 @@
-# Doc Flash ⚡ - Intelligent Document Processing Platform
+# Doc Flash - Document Processing with AI
 
-**Fast, intelligent document processing with the power of AI**
+A web application for extracting structured data from documents using AI language models. Built on Google's LangExtract framework with an intuitive web interface.
 
-Doc Flash is a modern web application built on top of Google's LangExtract framework, providing an intuitive interface for creating document extraction templates and processing both **PDF documents** (via OCR) and **plain text content** (direct input) with AI-powered extraction capabilities.
+## Features
 
-## 🚀 Features
+### Document Processing
+- **PDF Upload**: Convert PDFs to text using OCR
+- **Text Input**: Process plain text content directly
+- **Multiple Formats**: Handle various document types (contracts, invoices, forms)
 
-### 🎯 **Dual-Mode Extraction**
-- **Extract Mode**: Pull exact text spans from documents (names, dates, amounts)
-- **Generate Mode**: Create interpreted content (summaries, risk assessments, classifications)
-- **Adaptive AI**: Automatically adjusts temperature and prompting strategies based on mode
+### Extraction Modes
+- **Extract Mode**: Find specific text spans from documents (names, dates, amounts)
+- **Generate Mode**: Create interpreted content (summaries, classifications)
 
-### 📄 **Document Processing**
-- **PDF OCR**: Upload PDFs and convert to markdown with real-time progress tracking
-- **Direct Text Input**: Copy/paste text from any source (Word docs, emails, plain text files)
-- **Flexible Input**: No OCR needed for text files - paste directly into the scratchpad
-- **Multi-Provider Support**: Azure OpenAI, OpenAI, Google Gemini, Ollama (local models)
+### AI Integration
+- **Multiple Providers**: Azure OpenAI, OpenAI, Google Gemini, Ollama
 - **Template System**: Save and reuse extraction configurations
-- **Batch Processing**: Handle multiple documents efficiently
+- **Feedback Learning**: Improve results through user feedback and DSPy optimization
 
-### 📝 **Multiple Input Methods**
-- **📄 PDF Upload**: Drag & drop PDFs for automatic OCR processing with real-time progress
-- **📋 Text Paste**: Copy/paste content directly from .txt files, Word documents, emails, or web pages
-- **⚡ Scratchpad**: Interactive workspace that persists content throughout your extraction session
-- **🔄 Mixed Workflows**: Use OCR for some documents, direct text input for others
+### Web Interface
+- **Template Management**: Create and edit extraction schemas
+- **Real-time Processing**: Live progress updates for document processing
+- **Result Export**: Download results in HTML, JSON, or JSONL formats
 
-### 🧠 **Advanced AI Features**
-- **DSPy Integration**: Automatic prompt optimization using Stanford DSPy framework
-- **Real-time Learning**: AI learns from user feedback to improve future generations
-- **Master Feedback System**: Rate entire example generations for better optimization
-- **Document Class Isolation**: Feedback learning isolated by document type for precise improvements
-- **Adaptive Optimization**: Automatic prompt refinement based on user satisfaction ratings
-- **Template Management**: Document class dashboard with usage statistics and feedback tracking
+## Installation
 
-## 🏗️ Architecture
-
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Frontend      │    │    Backend       │    │   AI Providers  │
-│   (HTML/JS)     │◄──►│   (FastAPI)      │◄──►│ Azure OpenAI    │
-│                 │    │                  │    │ OpenAI          │
-│ • Template UI   │    │ • LangExtract    │    │ Google Gemini   │
-│ • PDF Upload    │    │ • OCR Pipeline   │    │ Ollama (Local)  │
-│ • Feedback UI   │    │ • DSPy Pipeline  │    │                 │
-│ • Real-time     │    │ • Template DB    │    │                 │
-│   Progress      │    │ • WebSockets     │    │                 │
-│ • Theme Support │    │ • Feedback Store │    │                 │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-```
-
-## 📋 Prerequisites
-
+### Prerequisites
 - Python 3.8+
-- Node.js (for optional frontend development)
-- Azure OpenAI / OpenAI / Google Gemini API access OR Ollama (for local models)
+- API access to one of: Azure OpenAI, OpenAI, Google Gemini, or Ollama
 
-## ⚙️ Installation
+### Setup
 
-1. **Clone the repository**
+1. **Clone and install**
 ```bash
-git clone https://github.com/LM-150A/doc-flash.git
-cd doc-flash
-```
-
-2. **Create virtual environment**
-```bash
-python -m venv doc-flash_env
-source doc-flash_env/bin/activate  # On Windows: doc-flash_env\Scripts\activate
-```
-
-3. **Install dependencies**
-```bash
+git clone https://github.com/LM-150A/docflash.git
+cd docflash
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. **Configure environment**
+2. **Configure environment**
 ```bash
 cp .env.example .env
 # Edit .env with your API credentials
 ```
 
-5. **Run the application**
+3. **Run application**
 ```bash
 python start_fastapi.py
 ```
 
-The application will be available at `http://localhost:5000`
+Access the application at `http://localhost:5000`
 
-## 🔧 Configuration
+## Configuration
 
-### Environment Variables (.env)
+### Environment Variables
 
 ```env
-# Azure OpenAI Configuration
+# Choose one provider
+LLM_PROVIDER=azure_openai  # Options: azure_openai, openai, gemini, ollama
+
+# Azure OpenAI
 AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
 AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4
-AZURE_OPENAI_API_VERSION=2024-02-01
-AZURE_OPENAI_API_KEY=your-api-key  # Optional if using managed identity
+AZURE_OPENAI_API_KEY=your-api-key
 
-# OpenAI Configuration (alternative)
+# OpenAI
 OPENAI_API_KEY=your-openai-key
-OPENAI_BASE_URL=https://api.openai.com/v1  # Optional
 
-# Google Gemini Configuration (alternative)
+# Google Gemini  
 GOOGLE_API_KEY=your-google-api-key
 
-# Ollama Configuration (local models - no API key needed)
+# Ollama (local)
 OLLAMA_MODEL_ID=gemma2:2b
 OLLAMA_BASE_URL=http://localhost:11434
 
-# Provider Selection
-LLM_PROVIDER=azure_openai  # Options: azure_openai, openai, gemini, ollama
-DEFAULT_MODEL=gpt-4
-DEFAULT_TEMPERATURE=0.0
-
-# DSPy Configuration (optional - enables advanced AI features)
+# Optional: Enable DSPy optimization
 DSPY_ENABLED=true
-DSPY_OPTIMIZATION_FREQUENCY=10  # Trigger optimization every N feedback entries
 ```
 
-## 📚 Usage Guide
+## Usage
 
-### 1. **Define Schema** 📋
-Create your extraction schema with dual-mode attributes:
+### 1. Define Schema
+Create extraction attributes specifying what information to extract:
 
-**Example: Legal Contract Schema**
 | Attribute | Description | Mode |
 |-----------|-------------|------|
 | client_name | Name of the client | Extract |
 | contract_value | Total contract amount | Extract |
-| risk_assessment | Overall contract risk level | Generate |
-| key_terms_summary | Summary of important terms | Generate |
+| summary | Brief contract summary | Generate |
 
-### 2. **Upload Sample Documents** 📄
-- **PDF Files**: Upload PDFs for automatic OCR processing
-- **Text Files**: Copy/paste text directly from .txt, Word docs, emails, or any text source
-- **Scratchpad**: Interactive workspace for immediate text input and editing
-- **Multiple Samples**: Add diverse example texts for better AI training
+### 2. Add Sample Documents
+- Upload PDF files for OCR processing
+- Copy/paste text content directly
+- Provide multiple examples for better training
 
-### 3. **Generate Examples** 🤖
-Doc Flash automatically creates training examples with mode-aware prompting:
-- **Extract fields**: Exact text spans with precise boundaries
-- **Generate fields**: Interpreted content with contextual understanding
+### 3. Generate Training Examples
+The system creates training examples based on your schema and sample documents.
 
-### 4. **Provide Feedback** 🧠
-Rate generated examples to improve AI performance:
-- **Quick Feedback**: 👍/👎 buttons for fast rating
-- **Detailed Feedback**: Star ratings, specific issues, and comments
-- **Real-time Learning**: DSPy optimizes prompts based on your feedback
-- **Document Class Learning**: Feedback is isolated by document type for precise improvements
+### 4. Process Documents
+Upload new documents and run extraction with configurable settings:
+- Number of extraction passes (1-3)
+- Parallel processing workers (5-20)
+- Temperature settings based on extraction modes
 
-### 5. **Process Documents** ⚡
-Run extraction on new documents with:
-- Configurable passes (1-3) for improved recall
-- Parallel processing (5-20 workers)
-- Adaptive temperature based on schema modes
-- **Enhanced with DSPy**: Improved prompts based on accumulated feedback
+### 5. Review and Improve
+- Rate generated examples to improve future results
+- Use detailed feedback to guide AI improvements
+- DSPy automatically optimizes prompts based on feedback
 
-### 6. **Download Results** 📥
-Get results in multiple formats:
-- **HTML Visualization**: Interactive document view with highlighted extractions
-- **JSONL**: Raw extraction data for further processing
-- **Structured JSON**: Clean output matching your target schema
+## API Endpoints
 
-## 💡 Mode Examples
-
-### **Extract Mode** 🎯
-Perfect for pulling exact information:
-
-```json
-{
-  "extraction_class": "contract_value",
-  "extraction_text": "$25,000",
-  "mode": "extract",
-  "attributes": {"page_number": "1", "section": "terms"}
-}
-```
-
-### **Generate Mode** 🧠
-Ideal for interpreted content:
-
-```json
-{
-  "extraction_class": "risk_assessment", 
-  "extraction_text": "Low risk - standard terms, established client, reasonable duration",
-  "mode": "generate",
-  "attributes": {"page_number": "multiple", "confidence": "high"}
-}
-```
-
-
-## 🔄 Workflow Example
-
-### Processing a Services Agreement
-
-1. **Input Document**: 
-   - **PDF Option**: Drag services agreement PDF → OCR processes automatically
-   - **Text Option**: Copy/paste contract text directly into scratchpad
-2. **Define Schema**:
-   ```
-   • client_name (Extract) - Name of the client receiving services  
-   • service_provider (Extract) - Company providing services
-   • contract_duration (Extract) - Length of the service period
-   • services_summary (Generate) - Brief summary of services provided
-   • risk_level (Generate) - Assessment of contract risk factors
-   ```
-
-3. **Generate Examples**: AI creates mode-aware training examples
-4. **Process Document**: Run extraction with adaptive temperature
-5. **Get Results**:
-   ```json
-   {
-     "contract_details": {
-       "parties": {
-         "client_name": {"result": "TechStart Inc.", "page_number": [1]},
-         "service_provider": {"result": "ABC Marketing Solutions LLC", "page_number": [1]}
-       },
-       "analysis": {
-         "services_summary": {"result": "Digital marketing consulting including market research, campaign development, and analytics", "page_number": [1]},
-         "risk_level": {"result": "Low - standard consulting agreement with established scope", "page_number": [1]}
-       }
-     }
-   }
-   ```
-
-## 🚀 Advanced Features
-
-### **Real-time Progress Tracking**
-WebSocket-powered live updates during OCR processing:
-```javascript
-// Real-time progress updates
-websocket.onmessage = function(event) {
-    const update = JSON.parse(event.data);
-    updateProgressBar(update.progress);
-};
-```
-
-### **Adaptive Temperature Control**
-Intelligent temperature selection based on schema modes:
-```python
-# Automatic temperature optimization
-has_generate_fields = any(attr.get('mode') == 'generate' for attr in schema)
-optimal_temperature = 0.3 if has_generate_fields else 0.0
-```
-
-## 🛠️ API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
 | `/` | GET | Main interface |
-| `/configure` | GET | Template configuration |
-| `/analyze` | GET | Document analysis interface |
-| `/upload_pdf` | POST | PDF upload and OCR processing |
-| `/generate_examples` | POST | AI example generation |
-| `/run_extraction` | POST | Document extraction |
-| `/register_template` | POST | Save extraction template |
-| `/download/{session_id}/{file_type}` | GET | Download results |
-| `/feedback/examples` | POST | Submit example feedback |
-| `/feedback/examples/detailed` | POST | Submit detailed feedback |
-| `/api/document_classes` | GET | Get document class statistics |
-| `/rl/document_classes` | GET | Document class dashboard |
+| `/upload_pdf` | POST | PDF upload and OCR |
+| `/generate_examples` | POST | Create training examples |
+| `/run_extraction` | POST | Process documents |
+| `/register_template` | POST | Save templates |
+| `/feedback/examples` | POST | Submit feedback |
 
-## 🏆 Best Practices
+## Architecture
 
-### **Schema Design**
-- Use **Extract** for factual data that appears verbatim in documents
-- Use **Generate** for analysis, summaries, or interpreted information
-- Provide clear, specific descriptions for better AI understanding
-- Include page numbers and section context in attributes
+```
+Frontend (HTML/JS) ←→ Backend (FastAPI) ←→ AI Providers
+    ↓                       ↓                    ↓
+• Template UI          • LangExtract        • Azure OpenAI
+• Document Upload      • OCR Pipeline       • OpenAI  
+• Feedback System      • DSPy Integration   • Google Gemini
+• Progress Tracking    • Template Storage   • Ollama
+```
 
-### **Sample Texts**
-- Provide 2-4 diverse examples of your document type
-- Include edge cases and variations
-- Use real document excerpts when possible
-- Cover all schema attributes in your samples
+## Best Practices
 
-### **Feedback & Learning**
-- **Rate examples regularly** for continuous AI improvement
-- **Provide specific feedback** using the detailed feedback modal
-- **Common feedback categories**:
-  - Wrong text extraction
-  - Incorrect field mapping
-  - Missing important fields
-  - Format or structure issues
-  - Wrong text generation
-- **Document class isolation**: Feedback only affects the specific document type
-- **Regeneration**: Click regenerate after feedback to see immediate improvements
+### Schema Design
+- Use Extract mode for factual data that appears verbatim
+- Use Generate mode for analysis or interpreted content
+- Write clear, specific attribute descriptions
 
-### **Advanced Feedback Memory System** 🧠
-- **Positive Feedback Preservation**: When you approve a prompt with positive feedback, it stays unchanged on regeneration
-- **Weighted Feedback History**: Recent feedback gets higher priority (1.0x) while older feedback maintains reduced influence (0.3x)
-- **Institutional Memory**: System remembers critical lessons learned while prioritizing recent user intent
-- **Quality Score Calculation**: Automatic 0.0-1.0 scoring based on feedback patterns helps DSPy make smarter optimization decisions
-- **MIPROv2 Integration**: Enhanced training examples with chronological context and quality signals for better prompt evolution
+### Training Data
+- Provide 2-4 diverse sample documents
+- Include variations and edge cases
+- Ensure samples cover all schema attributes
 
-### **Performance Optimization**
-- Start with 1 extraction pass, increase only if needed
-- Use 10 workers for balanced performance
-- Adjust character buffer based on document complexity
-- Monitor API costs with generate mode (higher temperature = more tokens)
-- **Enable DSPy** for automatic prompt optimization based on user feedback
+### Feedback
+- Rate examples regularly to improve performance
+- Use detailed feedback for specific issues
+- Feedback is isolated by document type
 
-### **Template Management & Editing** ✏️
-- **Save Templates**: Register templates for reuse across multiple documents
-- **Edit Templates**: Modify existing templates with full state preservation
-  - Navigate freely between "Define Schema" and "Generate Examples" steps
-  - All examples, schema attributes, and prompt descriptions are preserved
-  - No data loss when switching between steps during editing
-- **Template Dashboard**: View all saved templates with usage statistics
-- **Feedback Integration**: Templates automatically benefit from accumulated user feedback
-- **Version Control**: Edit templates maintain complete compatibility with existing workflows
+## Troubleshooting
 
-## 🔍 Troubleshooting
+### Common Issues
 
-### **Common Issues**
+**API Configuration**
+- Verify API credentials in `.env` file
+- Check endpoint URLs and model names
+- Ensure sufficient API quota/credits
 
-**"Azure OpenAI endpoint is required"**
-- Check your `.env` file has correct `AZURE_OPENAI_ENDPOINT`
-- Verify API key or managed identity configuration
+**PDF Processing**
+- Use clear, text-based PDFs (not scanned images)
+- Check file size limits (typically 16MB max)
+- Try alternative OCR if text extraction fails
 
-**"PDF processing failed"**
-- Ensure file is a valid PDF
-- Check file size limits (16MB max)
-- Try OCR-friendly PDFs (clear text, good quality)
-
-**"No extractions found"**
-- Review your schema descriptions
+**Poor Extraction Results**
+- Review and improve schema descriptions
 - Add more diverse training examples
-- Try increasing extraction passes
-- Check if document matches your training examples
-- **Provide feedback** on generated examples to improve future results
+- Increase extraction passes for better recall
+- Provide feedback on generated examples
 
-**"DSPy optimization not working"**
-- Check `DSPY_ENABLED=true` in your `.env` file
-- Ensure you have provided feedback on examples
-- Wait for sufficient feedback (default: 10 entries) to trigger optimization
-- Check console logs for DSPy-related messages
+**DSPy Optimization**
+- Set `DSPY_ENABLED=true` in environment
+- Provide sufficient feedback (default: 10+ examples)
+- Check logs for optimization triggers
 
-### **Performance Tips**
-- Use Extract mode for simple factual data
-- Reserve Generate mode for complex analysis
-- Start with conservative worker settings
-- Monitor temperature impact on costs
-
-## 🤝 Contributing
-
-We welcome contributions to Doc Flash! Please follow these guidelines:
+## Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes and ensure they follow the project's coding standards
-4. Add tests for new features or bug fixes
-5. Run the existing test suite to ensure nothing is broken
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to your branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request with a clear description of your changes
+2. Create a feature branch
+3. Make changes and add tests
+4. Submit a pull request
 
-### Development Setup
-- Follow the installation instructions above
-- Install development dependencies: `pip install -r requirements.txt`
-- Run tests before submitting PR
-- Follow PEP 8 coding standards
+## License
 
-## 📄 License
+Apache License 2.0 - see [LICENSE](LICENSE) file for details.
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+## Acknowledgments
 
-## 📚 Citation
-
-If you use Doc Flash in your research or project, please cite:
-
-```bibtex
-@software{doc_flash,
-  title={Doc Flash: Intelligent Document Processing Platform},
-  author={Lionel Martis},
-  year={2025},
-  url={https://github.com/LM-150A/doc-flash}
-}
-```
-
-## 🙏 Acknowledgments
-
-- **[Google LangExtract](https://github.com/google/langextract)**: Core extraction framework for structured data extraction from language models
-- **[Stanford DSPy](https://github.com/stanfordnlp/dspy)**: Advanced framework for automatic prompt optimization and program synthesis
-
----
-
-**Built with ❤️ using LangExtract, FastAPI, and modern web technologies**
-
-*⚡ Flash-fast document processing for the AI age*
+- [Google LangExtract](https://github.com/google/langextract/blob/main/CITATION.cff) - Core extraction framework
+- [Stanford DSPy](https://github.com/stanfordnlp/dspy) - Prompt optimization framework

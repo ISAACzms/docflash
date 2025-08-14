@@ -741,12 +741,12 @@
             
             // Load template details and show schema
             try {
-                console.log('🔧 [DEBUG] Loading template details for:', selectedTemplate);
+                console.log('ðŸ”§ [DEBUG] Loading template details for:', selectedTemplate);
                 const response = await fetch(`/api/template/${selectedTemplate}`);
                 const result = await response.json();
                 
                 if (result.success) {
-                    console.log('🔧 [DEBUG] Template loaded:', result.template);
+                    console.log('ðŸ”§ [DEBUG] Template loaded:', result.template);
                     displayTemplateSchema(result.template);
                     showStep(2);
                 } else {
@@ -759,7 +759,7 @@
         }
 
         function displayTemplateSchema(template) {
-            console.log('🔧 [DEBUG] Displaying template schema');
+            console.log('ðŸ”§ [DEBUG] Displaying template schema');
             // Create schema display area if it doesn't exist
             let schemaContainer = document.getElementById('templateSchemaContainer');
             if (!schemaContainer) {
@@ -793,7 +793,7 @@
                 `).join('');
                 
                 schemaList.innerHTML = schemaHtml;
-                console.log('🔧 [DEBUG] Schema displayed:', template.extraction_schema.length, 'attributes');
+                console.log('ðŸ”§ [DEBUG] Schema displayed:', template.extraction_schema.length, 'attributes');
             }
         }
 

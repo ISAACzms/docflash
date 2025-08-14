@@ -311,9 +311,32 @@
                                 </div>
                             </div>
 
+                            <!-- Additional Instructions -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm me-3" onclick="toggleAdditionalInstructions()" id="toggleInstructionsBtn">
+                                        <i class="fas fa-eye me-1"></i> Show
+                                    </button>
+                                    <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Additional Instructions (Optional)</h5>
+                                </div>
+                                <div id="additionalInstructionsContainer" style="display: none;">
+                                    <textarea class="form-control" id="additionalInstructions" rows="3" 
+                                              placeholder="Provide additional context for extraction (e.g., 'Expect multiple rows for this attribute', 'Currency should be formatted as USD', 'Extract all instances, not just the first one')..."></textarea>
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Help the AI understand specific patterns, formats, or multiple entries in your documents.
+                                    </small>
+                                </div>
+                            </div>
+
                             <!-- Output Schema -->
                             <div class="mb-4">
-                                <h5><i class="fas fa-code me-2"></i>Output Schema (JSON)</h5>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5><i class="fas fa-code me-2"></i>Output Schema (JSON)</h5>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="autoGenerateSchema()" id="generateSchemaBtn">
+                                        <i class="fas fa-magic me-1"></i> Auto-Generate
+                                    </button>
+                                </div>
                                 <textarea class="form-control" id="outputSchema" rows="8" 
                                           placeholder="Define your target JSON schema format..."></textarea>
                             </div>
@@ -453,7 +476,7 @@
         // Load template data
         async function loadTemplate() {
             const documentClass = getUrlParameter('document_class') || getUrlParameter('class');
-            console.log('🔧 [DEBUG] Starting loadTemplate with documentClass:', documentClass);
+            console.log('ðŸ”§ [DEBUG] Starting loadTemplate with documentClass:', documentClass);
             alert('Debug: Starting to load template: ' + documentClass);
             
             if (!documentClass) {
@@ -464,34 +487,34 @@
             document.getElementById('loadingState').querySelector('.loading-spinner').style.display = 'block';
 
             try {
-                console.log('🔧 [DEBUG] Loading template:', documentClass);
+                console.log('ðŸ”§ [DEBUG] Loading template:', documentClass);
                 const response = await fetch(`/get_template/${documentClass}`);
                 const result = await response.json();
                 
-                console.log('🔧 [DEBUG] Raw API response:', result);
+                console.log('ðŸ”§ [DEBUG] Raw API response:', result);
 
                 if (result.success) {
                     currentTemplate = result.template;
                     originalDocumentClass = documentClass;
-                    console.log('🔧 [DEBUG] Template loaded:', currentTemplate);
-                    console.log('🔧 [DEBUG] Template extraction_schema:', currentTemplate.extraction_schema);
+                    console.log('ðŸ”§ [DEBUG] Template loaded:', currentTemplate);
+                    console.log('ðŸ”§ [DEBUG] Template extraction_schema:', currentTemplate.extraction_schema);
                     populateForm(currentTemplate);
                     
                     document.getElementById('loadingState').style.display = 'none';
                     document.getElementById('templateEditor').style.display = 'block';
                 } else {
-                    console.log('🔧 [DEBUG] API call failed:', result);
+                    console.log('ðŸ”§ [DEBUG] API call failed:', result);
                     showStatus(`Failed to load template: ${result.error}`, 'danger');
                 }
             } catch (error) {
-                console.error('🔧 [DEBUG] Error loading template:', error);
+                console.error('ðŸ”§ [DEBUG] Error loading template:', error);
                 showStatus(`Error loading template: ${error.message}`, 'danger');
             }
         }
 
         // Populate form with template data
         function populateForm(template) {
-            console.log('🔧 [DEBUG] Populating form with template data');
+            console.log('ðŸ”§ [DEBUG] Populating form with template data');
             
             // Basic information
             document.getElementById('templateName').textContent = template.document_class;
@@ -512,24 +535,29 @@
                 document.getElementById('outputSchema').value = JSON.stringify(template.output_schema, null, 2);
             }
 
+            // Additional instructions
+            if (template.additional_instructions) {
+                document.getElementById('additionalInstructions').value = template.additional_instructions;
+            }
+
             // Populate schema
             populateSchema(template.extraction_schema || []);
 
             // Populate examples
             populateExamples(template.examples || []);
 
-            console.log('🔧 [DEBUG] Form populated successfully');
+            console.log('ðŸ”§ [DEBUG] Form populated successfully');
         }
 
         // Populate schema table
         function populateSchema(schema) {
-            console.log('🔧 [DEBUG] populateSchema called with:', schema);
-            console.log('🔧 [DEBUG] Schema length:', schema.length);
+            console.log('ðŸ”§ [DEBUG] populateSchema called with:', schema);
+            console.log('ðŸ”§ [DEBUG] Schema length:', schema.length);
             const tbody = document.querySelector('#schemaTable tbody');
             tbody.innerHTML = '';
 
             schema.forEach((attr, index) => {
-                console.log(`🔧 [DEBUG] Processing schema attribute ${index}:`, attr);
+                console.log(`ðŸ”§ [DEBUG] Processing schema attribute ${index}:`, attr);
                 addSchemaRow(attr.attribute, attr.description, attr.mode || 'extract');
             });
 
@@ -742,12 +770,93 @@
             return examples;
         }
 
+        // Toggle additional instructions visibility
+        function toggleAdditionalInstructions() {
+            const container = document.getElementById('additionalInstructionsContainer');
+            const btn = document.getElementById('toggleInstructionsBtn');
+            
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                btn.innerHTML = '<i class="fas fa-eye-slash me-1"></i> Hide';
+            } else {
+                container.style.display = 'none';
+                btn.innerHTML = '<i class="fas fa-eye me-1"></i> Show';
+            }
+        }
+
+        // Auto-generate schema function  
+        async function autoGenerateSchema() {
+            const documentClass = document.getElementById('documentClass').value.trim();
+            const extractionSchema = getSchemaData();
+            const additionalInstructions = document.getElementById('additionalInstructions').value.trim();
+            
+            // Validate inputs
+            if (!documentClass) {
+                showStatus('Please enter a Document Class name before generating schema.', 'warning');
+                document.getElementById('documentClass').focus();
+                return;
+            }
+            
+            if (extractionSchema.length === 0) {
+                showStatus('Please add at least one extraction attribute before generating schema.', 'warning');
+                return;
+            }
+            
+            // Update button state
+            const generateBtn = document.getElementById('generateSchemaBtn');
+            const originalText = generateBtn.innerHTML;
+            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating...';
+            generateBtn.disabled = true;
+            
+            try {
+                showStatus('Generating optimized JSON schema...', 'info');
+                
+                const response = await fetch('/generate_schema', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        document_class: documentClass,
+                        extraction_schema: extractionSchema,
+                        additional_instructions: additionalInstructions
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update the output schema textarea with generated schema
+                    document.getElementById('outputSchema').value = JSON.stringify(result.schema, null, 2);
+                    
+                    showStatus(`âœ… ${result.message}`, 'success');
+                    
+                    // Add a subtle highlight effect to show the schema was updated
+                    const textarea = document.getElementById('outputSchema');
+                    textarea.style.border = '2px solid #28a745';
+                    setTimeout(() => {
+                        textarea.style.border = '';
+                    }, 2000);
+                    
+                } else {
+                    throw new Error(result.error || 'Schema generation failed');
+                }
+                
+            } catch (error) {
+                console.error('Error generating schema:', error);
+                showStatus(`Error generating schema: ${error.message}`, 'danger');
+            } finally {
+                // Restore button state
+                generateBtn.innerHTML = originalText;
+                generateBtn.disabled = false;
+            }
+        }
+
         // Save template
         async function saveTemplate() {
             const documentClass = document.getElementById('documentClass').value.trim();
             const domainName = document.getElementById('domainSelect').value;
             const promptDescription = document.getElementById('promptDescription').value;
             const outputSchemaText = document.getElementById('outputSchema').value;
+            const additionalInstructions = document.getElementById('additionalInstructions').value.trim();
             
             if (!documentClass) {
                 showStatus('Document class is required.', 'warning');
@@ -782,7 +891,7 @@
             }
 
             try {
-                console.log('🔧 [DEBUG] Saving template:', documentClass);
+                console.log('ðŸ”§ [DEBUG] Saving template:', documentClass);
                 const response = await fetch('/update_template', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -793,15 +902,16 @@
                         extraction_schema: extractionSchema,
                         prompt_description: promptDescription,
                         examples: examples,
-                        output_schema: parsedOutputSchema
+                        output_schema: parsedOutputSchema,
+                        additional_instructions: additionalInstructions
                     })
                 });
 
                 const result = await response.json();
 
                 if (result.success) {
-                    showStatus(`✅ ${result.message}`, 'success');
-                    console.log('🔧 [DEBUG] Template saved successfully');
+                    showStatus(`âœ… ${result.message}`, 'success');
+                    console.log('ðŸ”§ [DEBUG] Template saved successfully');
                 } else {
                     showStatus(`Save failed: ${result.error}`, 'danger');
                 }
@@ -890,7 +1000,7 @@
                     nameInput.value = '';
                     descInput.value = '';
                     await loadDomains();
-                    showStatus(`✅ Domain "${domainName}" added successfully!`, 'success');
+                    showStatus(`âœ… Domain "${domainName}" added successfully!`, 'success');
                 } else {
                     alert(`Failed to add domain: ${result.detail}`);
                 }
@@ -919,7 +1029,7 @@
                 
                 if (result.success) {
                     await loadDomains();
-                    showStatus(`✅ ${result.message}`, 'success');
+                    showStatus(`âœ… ${result.message}`, 'success');
                 } else {
                     alert(`Failed to delete domain: ${result.detail}`);
                 }

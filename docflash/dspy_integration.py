@@ -36,10 +36,74 @@ class DocumentExtractionSignature(dspy.Signature):
     document_type = dspy.InputField(desc="Type of document (contract, invoice, etc)")
     sample_texts = dspy.InputField(desc="Sample document texts from user")
     schema_description = dspy.InputField(desc="Extraction schema with field descriptions")
+    additional_instructions = dspy.InputField(desc="Optional additional context and instructions for extraction (e.g., 'expect multiple rows', 'currency format', etc.)")
     user_feedback_history = dspy.InputField(desc="Chronological user feedback with lessons learned and performance patterns")
     feedback_quality_score = dspy.InputField(desc="Quality score based on recent feedback trends (0.0-1.0)")
     prompt_description = dspy.OutputField(desc="Clear, concise description of what to extract from this document type")
     optimized_examples = dspy.OutputField(desc="JSON list of examples, each with 'text' and 'extraction' fields")
+
+
+class SchemaGenerationSignature(dspy.Signature):
+    """Generate optimal JSON output schema based on extraction attributes and document type"""
+    document_type = dspy.InputField(desc="Type of document (contract, invoice, etc)")
+    extraction_attributes = dspy.InputField(desc="List of attributes to extract with their descriptions and modes")
+    additional_instructions = dspy.InputField(desc="Optional additional context about document structure and patterns")
+    target_json_schema = dspy.OutputField(desc="Well-structured JSON schema optimized for document extraction with nested structure and metadata fields")
+
+
+class SmartSchemaGenerator(dspy.Module):
+    """DSPy-powered JSON schema generator for document extraction"""
+    
+    def __init__(self):
+        super().__init__()
+        self.generate_schema = dspy.ChainOfThought(SchemaGenerationSignature)
+        
+    def forward(self, document_type, extraction_attributes, additional_instructions=""):
+        """Generate optimized JSON schema using DSPy"""
+        
+        # Format extraction attributes for DSPy processing
+        if isinstance(extraction_attributes, list):
+            formatted_attributes = []
+            for attr in extraction_attributes:
+                attr_desc = f"- {attr.get('attribute', 'unknown')}: {attr.get('description', 'No description')} (mode: {attr.get('mode', 'extract')})"
+                formatted_attributes.append(attr_desc)
+            attributes_text = "\n".join(formatted_attributes)
+        else:
+            attributes_text = str(extraction_attributes)
+            
+        # Add format guidance 
+        enhanced_instructions = f"""
+SCHEMA GENERATION REQUIREMENTS:
+1. Create a well-structured JSON schema that reflects the document type and attributes
+2. Use nested objects to group related fields logically
+3. Include metadata fields like "result" and "page_number" for each extracted value
+4. Consider the document structure (e.g., headers, line items, totals for invoices)
+5. Return ONLY valid JSON without any markdown formatting
+
+ATTRIBUTES TO INCLUDE:
+{attributes_text}
+
+FORMAT EXAMPLE:
+{{
+  "document_info": {{
+    "document_type": {{"result": "<value>", "page_number": "<pages>"}},
+    "document_date": {{"result": "<value>", "page_number": "<pages>"}}
+  }},
+  "main_content": {{
+    "field_name": {{"result": "<value>", "page_number": "<pages>"}}
+  }}
+}}
+
+IMPORTANT: Generate a complete, practical JSON schema that would work well for {document_type} documents.
+"""
+            
+        result = self.generate_schema(
+            document_type=document_type,
+            extraction_attributes=attributes_text,
+            additional_instructions=enhanced_instructions + ("\n\nADDITIONAL CONTEXT:\n" + additional_instructions if additional_instructions else "")
+        )
+        
+        return result
 
 
 class SmartDocumentExtractor(dspy.Module):
@@ -49,7 +113,7 @@ class SmartDocumentExtractor(dspy.Module):
         super().__init__()
         self.generate_examples = dspy.ChainOfThought(DocumentExtractionSignature)
         
-    def forward(self, document_type, sample_texts, schema_description, user_feedback_history="", feedback_quality_score="0.5"):
+    def forward(self, document_type, sample_texts, schema_description, additional_instructions="", user_feedback_history="", feedback_quality_score="0.5"):
         """Generate optimized examples using DSPy"""
         
         # Combine sample texts for DSPy processing
@@ -93,6 +157,7 @@ IMPORTANT: Generate 3-4 diverse examples using the provided sample texts. Each e
             document_type=document_type,
             sample_texts=combined_texts,
             schema_description=enhanced_schema,
+            additional_instructions=additional_instructions,
             user_feedback_history=user_feedback_history,
             feedback_quality_score=feedback_quality_score
         )
@@ -105,6 +170,7 @@ class DSPyDocFlashPipeline:
     
     def __init__(self):
         self.extractor = SmartDocumentExtractor()
+        self.schema_generator = SmartSchemaGenerator()
         self.is_compiled = False
         self.compilation_count = 0
         self.optimization_storage_path = "dspy_optimizations"
@@ -418,14 +484,14 @@ class DSPyDocFlashPipeline:
     def replace_generate_examples(self, document_class: str, sample_texts: List[str], 
                                   extraction_schema: List[Dict], output_schema: Dict,
                                   rl_session_id: str = None, master_feedback: Dict = None, 
-                                  feedback_data: Dict = None) -> Dict:
+                                  feedback_data: Dict = None, additional_instructions: str = "") -> Dict:
         """Drop-in replacement for current generate_examples endpoint"""
         
         try:
             print(f"🧠 [DSPy] Generating examples for document_class: {document_class}")
             
             # Convert to DSPy format
-            schema_description = self._format_schema_for_dspy(extraction_schema)
+            schema_description = self._format_schema_for_dspy(extraction_schema, additional_instructions)
             feedback_history = self._get_feedback_history_for_class(document_class)
             
             # Handle master feedback or legacy feedback
@@ -517,6 +583,7 @@ class DSPyDocFlashPipeline:
                 document_type=document_class,
                 sample_texts=sample_texts,
                 schema_description=schema_description,
+                additional_instructions=additional_instructions,
                 user_feedback_history=feedback_history,
                 feedback_quality_score=str(quality_score)
             )
@@ -538,7 +605,53 @@ class DSPyDocFlashPipeline:
             # Fallback to a basic structure if DSPy fails
             return self._create_fallback_response(document_class, sample_texts, extraction_schema)
     
-    def _format_schema_for_dspy(self, extraction_schema: List[Dict]) -> str:
+    def generate_output_schema(self, document_class: str, extraction_schema: List[Dict], 
+                              additional_instructions: str = "") -> Dict:
+        """Generate optimized JSON output schema using DSPy"""
+        
+        try:
+            print(f"🧠 [DSPy] Generating output schema for document_class: {document_class}")
+            
+            # Generate with DSPy schema generator
+            dspy_result = self.schema_generator(
+                document_type=document_class,
+                extraction_attributes=extraction_schema,
+                additional_instructions=additional_instructions
+            )
+            
+            # Parse and validate the generated schema
+            try:
+                # Clean up DSPy output (remove markdown formatting, etc.)
+                schema_text = dspy_result.target_json_schema.strip()
+                if schema_text.startswith("```json"):
+                    schema_text = schema_text[7:]
+                if schema_text.endswith("```"):
+                    schema_text = schema_text[:-3]
+                if schema_text.startswith("```"):
+                    schema_text = schema_text[3:]
+                
+                # Parse the JSON schema
+                generated_schema = json.loads(schema_text)
+                
+                print(f"✅ [DSPy] Generated schema with {len(generated_schema)} top-level sections")
+                return {
+                    "success": True,
+                    "schema": generated_schema,
+                    "message": f"🧠 DSPy generated optimized schema for {document_class}",
+                    "document_class": document_class,
+                    "generated_by": "dspy_schema_generator"
+                }
+                
+            except json.JSONDecodeError as e:
+                print(f"⚠️ [DSPy] JSON parsing error in generated schema: {e}")
+                print(f"Raw DSPy schema output: {dspy_result.target_json_schema}")
+                return self._create_fallback_schema(document_class, extraction_schema)
+            
+        except Exception as e:
+            print(f"❌ [DSPy] Error in schema generation: {e}")
+            return self._create_fallback_schema(document_class, extraction_schema)
+    
+    def _format_schema_for_dspy(self, extraction_schema: List[Dict], additional_instructions: str = "") -> str:
         """Convert DocFlash schema to DSPy-friendly description"""
         
         schema_parts = []
@@ -555,6 +668,11 @@ class DSPyDocFlashPipeline:
             schema_parts.append("\nGENERATE FIELDS (interpreted/derived content):")
             for field in generate_fields:
                 schema_parts.append(f"- {field['attribute']}: {field['description']}")
+        
+        # Add additional instructions if provided
+        if additional_instructions and additional_instructions.strip():
+            schema_parts.append(f"\nADDITIONAL INSTRUCTIONS:")
+            schema_parts.append(f"{additional_instructions.strip()}")
         
         return "\n".join(schema_parts)
     
@@ -1106,6 +1224,30 @@ class DSPyDocFlashPipeline:
             "message": "❌ DSPy example generation failed",
             "document_class": document_class,
             "rl_enabled": False
+        }
+    
+    def _create_fallback_schema(self, document_class: str, extraction_schema: List[Dict]) -> Dict:
+        """Create a basic fallback schema if DSPy fails"""
+        
+        # Create a simple schema based on extraction attributes
+        fallback_schema = {
+            f"{document_class}_data": {}
+        }
+        
+        for field in extraction_schema:
+            field_name = field.get("attribute", "unknown_field")
+            fallback_schema[f"{document_class}_data"][field_name] = {
+                "result": "<value>",
+                "page_number": "<pages>"
+            }
+        
+        return {
+            "success": True,
+            "schema": fallback_schema,
+            "message": f"⚠️ Generated basic fallback schema for {document_class} (DSPy unavailable)",
+            "document_class": document_class,
+            "generated_by": "fallback_schema_generator",
+            "fallback_used": True
         }
     
     def optimize_from_feedback(self, document_class: str = None) -> bool:

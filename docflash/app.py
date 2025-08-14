@@ -96,6 +96,50 @@ def get_all_document_classes() -> List[str]:
         return []
 
 
+def create_basic_schema(document_class: str, extraction_schema: List[Dict]) -> Dict:
+    """Create a basic JSON schema based on extraction attributes"""
+    
+    # Group fields by type for better organization
+    extract_fields = [item for item in extraction_schema if item.get("mode", "extract") == "extract"]
+    generate_fields = [item for item in extraction_schema if item.get("mode", "extract") == "generate"]
+    
+    schema = {}
+    
+    # Create document info section
+    if extract_fields or generate_fields:
+        schema["document_info"] = {
+            "document_type": {"result": "<value>", "page_number": "<pages>"}
+        }
+    
+    # Add extract fields section
+    if extract_fields:
+        schema["extracted_data"] = {}
+        for field in extract_fields:
+            field_name = field.get("attribute", "unknown_field")
+            schema["extracted_data"][field_name] = {
+                "result": "<value>",
+                "page_number": "<pages>"
+            }
+    
+    # Add generate fields section  
+    if generate_fields:
+        schema["generated_data"] = {}
+        for field in generate_fields:
+            field_name = field.get("attribute", "unknown_field")
+            schema["generated_data"][field_name] = {
+                "result": "<value>",
+                "page_number": "<pages>"
+            }
+    
+    # If no fields specified, create a simple structure
+    if not schema:
+        schema[f"{document_class}_data"] = {
+            "content": {"result": "<value>", "page_number": "<pages>"}
+        }
+    
+    return schema
+
+
 def create_language_model(temperature: float = 0.0):
     """Create language model instance based on environment configuration"""
     try:
@@ -114,10 +158,6 @@ def create_language_model(temperature: float = 0.0):
 async def index(request: Request):
     return templates.TemplateResponse("main.html", {"request": request})
 
-
-@app.get("/about", response_class=HTMLResponse)
-async def about(request: Request):
-    return templates.TemplateResponse("about.html", {"request": request})
 
 
 @app.get("/configure", response_class=HTMLResponse)
@@ -294,6 +334,7 @@ async def register_template(request: Request):
         examples = data.get("examples", [])
         output_schema = data.get("output_schema", {})
         domain_name = data.get("domain_name")
+        additional_instructions = data.get("additional_instructions", "")
         # Model is now configured via environment variables
 
         if not document_class:
@@ -315,6 +356,7 @@ async def register_template(request: Request):
             examples=examples,
             output_schema=output_schema,
             domain_name=domain_name,
+            additional_instructions=additional_instructions,
         )
         
         # Update domain statistics if domain was assigned
@@ -728,6 +770,7 @@ async def update_template(request: Request):
         examples = data.get("examples", [])
         output_schema = data.get("output_schema", {})
         domain_name = data.get("domain_name")
+        additional_instructions = data.get("additional_instructions", "")
 
         if not original_class or not document_class:
             raise HTTPException(status_code=400, detail="Document class is required")
@@ -757,6 +800,7 @@ async def update_template(request: Request):
             examples=examples,
             output_schema=output_schema,
             domain_name=domain_name,
+            additional_instructions=additional_instructions,
         )
         
         if not success:
@@ -799,6 +843,7 @@ async def generate_examples(request: Request):
         sample_texts = data.get("sample_texts", [])
         extraction_schema = data.get("extraction_schema", [])
         output_schema = data.get("output_schema", {})
+        additional_instructions = data.get("additional_instructions", "")
         # Model is now configured via environment variables
         document_class = data.get("document_class", "unknown")
         
@@ -911,7 +956,8 @@ async def generate_examples(request: Request):
                         output_schema=output_schema,
                         rl_session_id=rl_session_id,
                         master_feedback=effective_master_feedback,  # Use accumulated feedback
-                        feedback_data=feedback_data  # Legacy support
+                        feedback_data=feedback_data,  # Legacy support
+                        additional_instructions=additional_instructions
                     )
                     
                     # Only return DSPy result if it was actually successful (not fallback)
@@ -1170,6 +1216,76 @@ Return ONLY a JSON object with this exact structure:
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to generate examples: {str(e)}"
+        )
+
+
+@app.post("/generate_schema")
+async def generate_schema(request: Request):
+    """Generate optimal JSON schema using DSPy based on extraction attributes"""
+    try:
+        data = await request.json()
+        document_class = data.get("document_class", "unknown").strip()
+        extraction_schema = data.get("extraction_schema", [])
+        additional_instructions = data.get("additional_instructions", "")
+        
+        if not document_class or document_class.lower() == "unknown":
+            raise HTTPException(status_code=400, detail="Document class is required")
+        
+        if not extraction_schema:
+            raise HTTPException(status_code=400, detail="At least one extraction attribute is required")
+        
+        print(f"🧠 [Schema] Generating schema for {document_class} with {len(extraction_schema)} attributes")
+        
+        # Try DSPy schema generation if available
+        if DSPY_ENABLED:
+            try:
+                print(f"🧠 [DSPy] Checking DSPy availability for schema generation")
+                dspy_pipeline = get_dspy_pipeline()
+                
+                # Check if DSPy is actually configured and working
+                import dspy
+                if dspy.settings.lm is not None:
+                    print("✅ [DSPy] DSPy is properly configured, attempting schema generation...")
+                    dspy_result = dspy_pipeline.generate_output_schema(
+                        document_class=document_class,
+                        extraction_schema=extraction_schema,
+                        additional_instructions=additional_instructions
+                    )
+                    
+                    # Only return DSPy result if it was actually successful (not fallback)
+                    if dspy_result.get('success', False) and not dspy_result.get('fallback_used', False):
+                        print(f"✅ [DSPy] Successfully generated schema using DSPy pipeline")
+                        return dspy_result
+                    else:
+                        print("⚠️ [DSPy] DSPy schema generation unsuccessful, falling back to basic schema")
+                else:
+                    print("⚠️ [DSPy] No LM configured, will create basic schema")
+            except Exception as e:
+                print(f"⚠️ [DSPy] DSPy schema generation failed: {e}, falling back to basic schema")
+        
+        # Fallback to basic schema generation
+        print(f"🔧 Creating basic schema for {document_class}")
+        basic_schema = create_basic_schema(document_class, extraction_schema)
+        
+        return {
+            "success": True,
+            "schema": basic_schema,
+            "message": f"Generated basic schema for {document_class}",
+            "document_class": document_class,
+            "generated_by": "basic_schema_generator"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error generating schema: {e}")
+        return JSONResponse(
+            content={
+                "success": False,
+                "error": str(e),
+                "message": "Failed to generate schema"
+            },
+            status_code=500
         )
 
 

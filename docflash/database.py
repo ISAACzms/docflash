@@ -60,6 +60,7 @@ class DocumentTemplateDB:
         examples: List[Dict],
         output_schema: Dict,
         domain_name: str,
+        additional_instructions: str = "",
     ) -> str:
         """Register a new document template"""
 
@@ -73,6 +74,7 @@ class DocumentTemplateDB:
             "examples": examples,
             "output_schema": output_schema,
             "domain_name": domain_name,
+            "additional_instructions": additional_instructions,
             "created_at": datetime.now().isoformat(),
             "last_used": None,
             "usage_count": 0,
@@ -116,6 +118,7 @@ class DocumentTemplateDB:
         examples: List[Dict],
         output_schema: Dict,
         domain_name: str,
+        additional_instructions: str = "",
     ) -> bool:
         """Update an existing document template (preserves metadata)"""
         if document_class not in self.templates:
@@ -133,6 +136,7 @@ class DocumentTemplateDB:
             "examples": examples,
             "output_schema": output_schema,
             "domain_name": domain_name,
+            "additional_instructions": additional_instructions,
             "created_at": existing_template.get("created_at"),
             "last_used": existing_template.get("last_used"),
             "usage_count": existing_template.get("usage_count", 0),
