@@ -1,6 +1,6 @@
 # Doc Flash - Document Processing with AI
 
-A web application for extracting structured data from documents using AI language models. Built on Google's LangExtract framework with an intuitive web interface.
+A web application for extracting structured data from documents using AI language models. Built on Google's LangExtract and Stanford's DSPy frameworks with an intuitive web interface.
 
 ## Features
 
