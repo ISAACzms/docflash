@@ -585,9 +585,9 @@ class PDFOCRPipeline:
             r"<watermark>(.*?)</watermark>", r"[WATERMARK: \1]", text, flags=re.DOTALL
         )
 
-        # Handle page numbers
+        # Remove OCR-detected page numbers (we use our own **PAGE NUMBER X** headers)
         text = re.sub(
-            r"<page_number>(.*?)</page_number>", r"[PAGE: \1]", text, flags=re.DOTALL
+            r"<page_number>(.*?)</page_number>", "", text, flags=re.DOTALL
         )
 
         # Handle image descriptions

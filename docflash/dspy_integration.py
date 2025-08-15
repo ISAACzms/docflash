@@ -306,7 +306,7 @@ class DSPyDocFlashPipeline:
                 "compilation_count": self.compilation_count,
                 "saved_at": datetime.now().isoformat(),
                 "dspy_version": "2.6.27",  # Current DSPy version
-                "success_metrics": self._get_model_success_metrics(document_class)
+                "success_metrics": self._get_model_success_metrics(document_class, domain_name)
             }
             
             print(f"💾 [DSPy] Saving optimized model: {model_file}")
@@ -458,13 +458,13 @@ class DSPyDocFlashPipeline:
             print(f"❌ [DSPy] Error deleting domain optimizations for {domain_name}: {e}")
             return False
 
-    def _get_model_success_metrics(self, document_class: str) -> Dict:
+    def _get_model_success_metrics(self, document_class: str, domain_name: str = None) -> Dict:
         """Get success metrics for the current model from feedback analysis"""
         try:
             from .rl_feedback_analyzer import feedback_analyzer
             
             feedback_analyzer.load_stored_feedback()
-            analysis = feedback_analyzer.analyze_feedback_for_document_class(document_class)
+            analysis = feedback_analyzer.analyze_feedback_for_document_class(document_class, domain_name)
             
             if analysis and analysis.get('status') != 'no_feedback':
                 return {
@@ -484,15 +484,17 @@ class DSPyDocFlashPipeline:
     def replace_generate_examples(self, document_class: str, sample_texts: List[str], 
                                   extraction_schema: List[Dict], output_schema: Dict,
                                   rl_session_id: str = None, master_feedback: Dict = None, 
-                                  feedback_data: Dict = None, additional_instructions: str = "") -> Dict:
+                                  feedback_data: Dict = None, additional_instructions: str = "", 
+                                  domain_name: str = None) -> Dict:
         """Drop-in replacement for current generate_examples endpoint"""
         
         try:
-            print(f"🧠 [DSPy] Generating examples for document_class: {document_class}")
+            domain_text = f" in domain '{domain_name}'" if domain_name else ""
+            print(f"🧠 [DSPy] Generating examples for document_class: {document_class}{domain_text}")
             
             # Convert to DSPy format
             schema_description = self._format_schema_for_dspy(extraction_schema, additional_instructions)
-            feedback_history = self._get_feedback_history_for_class(document_class)
+            feedback_history = self._get_feedback_history_for_class(document_class, domain_name)
             
             # Handle master feedback or legacy feedback
             current_feedback_text = ""
@@ -676,15 +678,15 @@ class DSPyDocFlashPipeline:
         
         return "\n".join(schema_parts)
     
-    def _get_feedback_history_for_class(self, document_class: str) -> str:
-        """Get formatted feedback history for this document class"""
+    def _get_feedback_history_for_class(self, document_class: str, domain_name: str = None) -> str:
+        """Get formatted feedback history for this document class, optionally filtered by domain"""
         
         try:
             # Reload feedback to ensure we have latest data
             feedback_analyzer.load_stored_feedback()
             
             # Get feedback analysis
-            analysis = feedback_analyzer.analyze_feedback_for_document_class(document_class)
+            analysis = feedback_analyzer.analyze_feedback_for_document_class(document_class, domain_name)
             
             # Handle case where analysis is None
             if analysis is None:
@@ -1472,19 +1474,20 @@ class DSPyDocFlashPipeline:
                 "examples": []
             }, indent=2)
     
-    def delete_feedback_for_document_class(self, document_class: str) -> bool:
-        """Delete all DSPy feedback and optimization data for a specific document class"""
+    def delete_feedback_for_document_class(self, document_class: str, domain_name: str = None) -> bool:
+        """Delete all DSPy feedback and optimization data for a specific document class and domain"""
         try:
             deleted_count = 0
             
             # Clean up stored feedback via RL feedback analyzer
             from .rl_feedback_analyzer import feedback_analyzer
-            deleted_count += feedback_analyzer.delete_feedback_for_document_class(document_class)
+            deleted_count += feedback_analyzer.delete_feedback_for_document_class(document_class, domain_name)
             
             # Clean up any DSPy-specific storage (compiled models, optimization history, etc.)
             # Note: DSPy models are typically stored in memory, but we could add file-based cleanup here
             
-            print(f"🧠 [DSPy] Cleaned up DSPy data for document class: {document_class}")
+            domain_text = f" in domain {domain_name}" if domain_name else ""
+            print(f"🧠 [DSPy] Cleaned up DSPy data for document class: {document_class}{domain_text}")
             return deleted_count > 0
             
         except Exception as e:

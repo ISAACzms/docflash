@@ -34,7 +34,14 @@ class FeedbackAnalyzer:
                       detailed_feedback: Optional[Dict] = None) -> bool:
         """Store user feedback for analysis"""
         try:
-            feedback_id = f"{session_id}_{example_index}"
+            # Extract domain from example_data for filename
+            domain_name = example_data.get('domain_name') if example_data else None
+            if domain_name is None:
+                safe_domain = 'unknown'
+            else:
+                # Sanitize domain name for filename (replace special chars with underscores)
+                safe_domain = ''.join(c if c.isalnum() else '_' for c in str(domain_name))
+            feedback_id = f"{safe_domain}_{session_id}_{example_index}"
             
             self.feedback_store[feedback_id] = {
                 'session_id': session_id,
@@ -54,19 +61,22 @@ class FeedbackAnalyzer:
             print(f"❌ [RL] Error storing feedback: {e}")
             return False
     
-    def analyze_feedback_for_document_class(self, document_class: str) -> Dict[str, Any]:
-        """Analyze all feedback for a specific document class"""
+    def analyze_feedback_for_document_class(self, document_class: str, domain_name: Optional[str] = None) -> Dict[str, Any]:
+        """Analyze all feedback for a specific document class, optionally filtered by domain"""
         
         try:
-            # Find all feedback for this document class
+            # Find all feedback for this document class and domain
             relevant_feedback = []
             for feedback_id, feedback in self.feedback_store.items():
                 try:
                     if feedback and isinstance(feedback, dict):
                         example_data = feedback.get('example_data')
                         if example_data and isinstance(example_data, dict):
+                            # Check document class match
                             if example_data.get('document_class') == document_class:
-                                relevant_feedback.append(feedback)
+                                # If domain_name is specified, also check domain match
+                                if domain_name is None or example_data.get('domain_name') == domain_name:
+                                    relevant_feedback.append(feedback)
                 except Exception as feedback_error:
                     print(f"⚠️ [RL] Skipping malformed feedback entry {feedback_id}: {feedback_error}")
                     continue
@@ -97,7 +107,8 @@ class FeedbackAnalyzer:
             optimization_strategy = self._determine_optimization_strategy(recent_prompt_positive, recent_example_positive)
             
             # Debug logging for transparency
-            print(f"📊 [RL] Feedback Analysis for {document_class}:")
+            domain_filter_text = f" in domain '{domain_name}'" if domain_name else ""
+            print(f"📊 [RL] Feedback Analysis for {document_class}{domain_filter_text}:")
             print(f"  - Prompt feedback: {len(prompt_feedback)} entries, recent: {'✅ positive' if recent_prompt_positive else '❌ negative/none'}")
             print(f"  - Example feedback: {len(example_feedback)} entries, recent: {'✅ positive' if recent_example_positive else '❌ negative/none'}")
             print(f"  - Optimization strategy: {optimization_strategy}")
@@ -214,8 +225,8 @@ class FeedbackAnalyzer:
         print(f"🧠 [RL] Applied {len(optimizations)} comprehensive optimizations to prompt")
         return optimized_prompt
     
-    def get_feedback_stats(self, document_class: Optional[str] = None) -> Dict[str, Any]:
-        """Get statistics about collected feedback"""
+    def get_feedback_stats(self, document_class: Optional[str] = None, domain_name: Optional[str] = None) -> Dict[str, Any]:
+        """Get statistics about collected feedback, optionally filtered by document class and domain"""
         
         feedback_list = list(self.feedback_store.values())
         
@@ -223,6 +234,12 @@ class FeedbackAnalyzer:
             feedback_list = [
                 f for f in feedback_list 
                 if f['example_data'].get('document_class') == document_class
+            ]
+            
+        if domain_name:
+            feedback_list = [
+                f for f in feedback_list 
+                if f['example_data'].get('domain_name') == domain_name
             ]
         
         if not feedback_list:
@@ -465,16 +482,19 @@ class FeedbackAnalyzer:
         except Exception as e:
             print(f"❌ [RL] Error loading stored feedback: {e}")
     
-    def delete_feedback_for_document_class(self, document_class: str) -> bool:
-        """Delete all feedback data for a specific document class"""
+    def delete_feedback_for_document_class(self, document_class: str, domain_name: Optional[str] = None) -> bool:
+        """Delete all feedback data for a specific document class, optionally filtered by domain"""
         try:
             deleted_count = 0
             feedback_ids_to_delete = []
             
-            # Find all feedback entries for this document class
+            # Find all feedback entries for this document class and optionally domain
             for feedback_id, feedback_data in self.feedback_store.items():
-                if feedback_data.get('example_data', {}).get('document_class') == document_class:
-                    feedback_ids_to_delete.append(feedback_id)
+                example_data = feedback_data.get('example_data', {})
+                if example_data.get('document_class') == document_class:
+                    # If domain_name is specified, also check domain match
+                    if domain_name is None or example_data.get('domain_name') == domain_name:
+                        feedback_ids_to_delete.append(feedback_id)
             
             # Delete from memory and files
             for feedback_id in feedback_ids_to_delete:
@@ -489,9 +509,11 @@ class FeedbackAnalyzer:
                     os.remove(feedback_file)
             
             if deleted_count > 0:
-                print(f"🧠 [RL] Deleted {deleted_count} feedback entries for document class: {document_class}")
+                domain_text = f" in domain '{domain_name}'" if domain_name else ""
+                print(f"🧠 [RL] Deleted {deleted_count} feedback entries for document class: {document_class}{domain_text}")
             else:
-                print(f"🧠 [RL] No feedback entries found for document class: {document_class}")
+                domain_text = f" in domain '{domain_name}'" if domain_name else ""
+                print(f"🧠 [RL] No feedback entries found for document class: {document_class}{domain_text}")
             
             return deleted_count > 0
             

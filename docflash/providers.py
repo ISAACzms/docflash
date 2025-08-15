@@ -14,10 +14,11 @@ from .azure_openai_patch import apply_azure_openai_patch
 apply_azure_openai_patch()
 
 from langextract.inference import (
-    AzureOpenAILanguageModel,
-    GeminiLanguageModel,
-    OpenAILanguageModel,
+    AzureOpenAILanguageModel,  # Our custom class from monkey patch
+    BaseLanguageModel,
 )
+from langextract.providers.gemini import GeminiLanguageModel
+from langextract.providers.openai import OpenAILanguageModel
 
 try:
     from openai import OpenAI

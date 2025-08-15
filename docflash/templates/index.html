@@ -7,9 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* ChatGPT-style Theme System */
         :root {
-            /* Light theme colors (ChatGPT style) */
             --bg-primary: #ffffff;
             --bg-secondary: #f7f7f8;
             --bg-tertiary: #ececf1;
@@ -644,7 +642,7 @@
                             <div class="spinner-border text-primary mb-3" role="status">
                                 <span class="visually-hidden">Generating examples...</span>
                             </div>
-                            <p class="text-muted">âš¡ AI is generating examples and prompts...</p>
+                            <p class="text-muted">⚡ AI is generating examples and prompts...</p>
                         </div>
 
                         <div id="generatedContent" style="display: none;">
@@ -657,7 +655,7 @@
                                 
                                 <!-- Prompt Description Feedback Controls -->
                                 <div class="d-flex justify-content-between align-items-center mt-2" id="promptFeedbackControls" style="display: none !important;">
-                                    <small class="text-muted">ðŸ’¡ Tip: Be specific about what to extract and include any special instructions</small>
+                                    <small class="text-muted">💡 Tip: Be specific about what to extract and include any special instructions</small>
                                     <div class="d-flex align-items-center gap-2">
                                         <small class="text-muted me-2">Rate this prompt description:</small>
                                         <button class="btn btn-sm btn-outline-success" onclick="submitPromptFeedback('positive')" title="Good prompt description">
@@ -671,7 +669,7 @@
                                         </button>
                                     </div>
                                 </div>
-                                <small class="text-muted mt-1" id="promptTip">ðŸ’¡ Tip: Be specific about what to extract and include any special instructions</small>
+                                <small class="text-muted mt-1" id="promptTip">💡 Tip: Be specific about what to extract and include any special instructions</small>
                             </div>
 
                             <div class="mb-4">
@@ -766,7 +764,7 @@
                             <div class="spinner-border text-success mb-3" role="status">
                                 <span class="visually-hidden">Running extraction...</span>
                             </div>
-                            <p class="text-muted">âš¡ Flash extracting information...</p>
+                            <p class="text-muted">⚡ Flash extracting information...</p>
                         </div>
 
                         <div class="text-end mt-4">
@@ -1260,7 +1258,7 @@
         function displayEditableExamples(examples) {
             const container = document.getElementById('examplesContainer');
             if (!container) {
-                console.error('âŒ [ERROR] examplesContainer not found!');
+                console.error('❌ [ERROR] examplesContainer not found\!');
                 return;
             }
             container.innerHTML = '';
@@ -1272,7 +1270,7 @@
                     <div class="example-header d-flex justify-content-between align-items-center mb-3">
                         <div class="example-title-group">
                             <label class="form-label fw-bold mb-0">Example ${exampleIndex + 1}</label>
-                            <span class="badge badge-rl ms-2">ðŸ§  AI Generated</span>
+                            <span class="badge badge-rl ms-2">🧠 AI Generated</span>
                         </div>
                         <button class="btn btn-sm btn-outline-danger remove-example-btn" onclick="removeExample(${exampleIndex})" title="Remove this example">
                             <i class="fas fa-times"></i>
@@ -1378,15 +1376,15 @@
                 session_id: Date.now() // Unique session identifier
             };
             
-            console.log('ðŸ§  [RL] Quick feedback stored:', feedbackType, 'at', new Date().toISOString());
-            console.log('ðŸ” [RL] masterFeedbackData after quick feedback:', JSON.stringify(masterFeedbackData, null, 2));
+            console.log('🧠 [RL] Quick feedback stored:', feedbackType, 'at', new Date().toISOString());
+            console.log('📋 [RL] masterFeedbackData after quick feedback:', JSON.stringify(masterFeedbackData, null, 2));
             
             // CRITICAL FIX: Store master feedback to server immediately
             storeMasterFeedbackToServer(masterFeedbackData);
             
             // Visual feedback
             const statusDiv = document.getElementById('masterFeedbackStatus');
-            const icon = feedbackType === 'positive' ? 'ðŸ‘' : 'ðŸ‘Ž';
+            const icon = feedbackType === 'positive' ? '👍' : '👎';
             statusDiv.innerHTML = `<small class="badge badge-rl">${icon} New feedback added! Building on previous feedback for this document class.</small>`;
             
             // Update button states in compact UI
@@ -1446,7 +1444,7 @@
             } else {
                 feedbackDisplay.innerHTML = `
                     <i class="fas fa-question-circle text-muted"></i> 
-                    Please first click <strong>ðŸ‘ or ðŸ‘Ž</strong> to give feedback
+                    Please first click <strong>👍 or 👎</strong> to give feedback
                 `;
                 ratingDisplay.innerHTML = 'No feedback selected yet';
             }
@@ -1492,7 +1490,7 @@
                     const comments = entry.detailed_feedback?.comments || '';
                     const issues = entry.detailed_feedback?.issues || [];
                     
-                    const icon = feedbackType === 'positive' ? 'ðŸ‘' : feedbackType === 'negative' ? 'ðŸ‘Ž' : 'â“';
+                    const icon = feedbackType === 'positive' ? '👍' : feedbackType === 'negative' ? '👎' : '❓';
                     const badgeClass = feedbackType === 'positive' ? 'bg-success' : feedbackType === 'negative' ? 'bg-danger' : 'bg-secondary';
                     
                     feedbackHTML += `
@@ -1500,7 +1498,7 @@
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div>
                                     <span class="badge ${badgeClass} me-2">${icon} ${feedbackType}</span>
-                                    ${rating ? `<span class="badge bg-warning text-dark">${rating}â­</span>` : ''}
+                                    ${rating ? `<span class="badge bg-warning text-dark">${rating}⭐</span>` : ''}
                                 </div>
                                 <div>
                                     <small class="text-muted">${timestamp}</small>
@@ -1586,7 +1584,7 @@
                 session_id: Date.now() // Unique session identifier
             };
             
-            console.log(`ðŸ§  [RL] Detailed feedback: ${feedbackType} (${rating}/5) with ${issues.length} issues`);
+            console.log(`🧠 [RL] Detailed feedback: ${feedbackType} (${rating}/5) with ${issues.length} issues`);
             
             // Close modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('masterFeedbackModal'));
@@ -1594,12 +1592,12 @@
             
             // Update UI
             const statusDiv = document.getElementById('masterFeedbackStatus');
-            statusDiv.innerHTML = `<small class="badge badge-rl">ðŸ’¬ Detailed feedback: ${rating}â­ - ${comments ? 'With comments' : 'No comments'}</small>`;
+            statusDiv.innerHTML = `<small class="badge badge-rl">💬 Detailed feedback: ${rating}⭐ - ${comments ? 'With comments' : 'No comments'}</small>`;
             
             // CRITICAL FIX: Store detailed master feedback to server immediately
             storeMasterFeedbackToServer(masterFeedbackData);
             
-            showStatus(`Detailed feedback added (${rating}â­). Building on all previous feedback for this document class!`, 'success');
+            showStatus(`Detailed feedback added (${rating}⭐). Building on all previous feedback for this document class!`, 'success');
             
             // Auto-trigger regeneration
             setTimeout(() => {
@@ -1792,7 +1790,7 @@
                     // Update the output schema textarea with generated schema
                     document.getElementById('outputSchema').value = JSON.stringify(result.schema, null, 2);
                     
-                    showStatus(`âœ… ${result.message}`, 'success');
+                    showStatus(`✅ ${result.message}`, 'success');
                     
                     // Add a subtle highlight effect to show the schema was updated
                     const textarea = document.getElementById('outputSchema');
@@ -1888,6 +1886,7 @@
             document.getElementById('loadingExamples').style.display = 'block';
 
             try {
+                const selectedDomain = document.getElementById('domainSelect').value;
                 const response = await fetch('/generate_examples', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -1896,6 +1895,7 @@
                         extraction_schema: extractionSchema,
                         output_schema: parsedOutputSchema,
                         document_class: documentClass,  // For RL feedback tracking
+                        domain_name: selectedDomain || null,
                         additional_instructions: additionalInstructions
                     })
                 });
@@ -1916,7 +1916,7 @@
                     
                     // Show Step 2
                     document.getElementById('step2').style.display = 'block';
-                    showStatus(result.message + (result.rl_enabled ? ' ðŸ§  RL Learning Enabled!' : ''), 'success');
+                    showStatus(result.message + (result.rl_enabled ? ' 🧠 RL Learning Enabled!' : ''), 'success');
                 } else {
                     throw new Error(result.error);
                 }
@@ -1961,17 +1961,18 @@
                 // CRITICAL FIX: Load accumulated master feedback from server instead of just current session
                 requestBody.rl_session_id = currentRLSessionId || `master_${Date.now()}`;
                 requestBody.document_class = documentClass; // Ensure document class is sent for feedback loading
+                requestBody.domain_name = document.getElementById('domainSelect').value || null;
                 
                 // Include current session master feedback if available
                 if (masterFeedbackData && Object.keys(masterFeedbackData).length > 0) {
                     requestBody.master_feedback = masterFeedbackData;
-                    console.log('ðŸ§  [RL] Regenerating with current session master feedback:', masterFeedbackData.type, masterFeedbackData.detailed_feedback ? '(detailed)' : '(quick)');
-                    console.log('ðŸ” [RL] Current session feedback data:', JSON.stringify(masterFeedbackData, null, 2));
+                    console.log('🧠 [RL] Regenerating with current session master feedback:', masterFeedbackData.type, masterFeedbackData.detailed_feedback ? '(detailed)' : '(quick)');
+                    console.log('📋 [RL] Current session feedback data:', JSON.stringify(masterFeedbackData, null, 2));
                 } else {
-                    console.log('ðŸ” [RL] No current session master feedback, backend will load accumulated feedback');
+                    console.log('📋 [RL] No current session master feedback, backend will load accumulated feedback');
                 }
                 
-                console.log('ðŸ”„ [RL] Backend will load all accumulated feedback for document class:', documentClass);
+                console.log('📋„ [RL] Backend will load all accumulated feedback for document class:', documentClass);
 
                 const response = await fetch('/generate_examples', {
                     method: 'POST',
@@ -1997,27 +1998,27 @@
                     let statusMessage = result.message;
                     if (requestBody.master_feedback) {
                         const feedback = requestBody.master_feedback;
-                        statusMessage += ` ðŸ§  Regenerated with master feedback (${feedback.type})`;
+                        statusMessage += ` 🧠 Regenerated with master feedback (${feedback.type})`;
                         if (feedback.detailed_feedback) {
                             const rating = feedback.detailed_feedback.rating || 0;
-                            statusMessage += ` - ${rating}â­ rating`;
+                            statusMessage += ` - ${rating}⭐ rating`;
                             if (feedback.detailed_feedback.comments) {
                                 statusMessage += ' with comments';
                             }
                         }
                         statusMessage += '!';
                     } else if (result.rl_enabled) {
-                        statusMessage += ' ðŸ§  RL Applied!';
+                        statusMessage += ' 🧠 RL Applied!';
                     }
                     
                     // Feedback persists per document class - never cleared until document class is deleted
                     if (requestBody.master_feedback) {
-                        console.log('ðŸ§  [RL] Feedback applied and persisted for document class:', documentClass);
+                        console.log('🧠 [RL] Feedback applied and persisted for document class:', documentClass);
                         
                         const statusDiv = document.getElementById('masterFeedbackStatus');
                         if (statusDiv) {
                             const feedbackType = requestBody.master_feedback.type;
-                            const icon = feedbackType === 'positive' ? 'ðŸ‘' : 'ðŸ‘Ž';
+                            const icon = feedbackType === 'positive' ? '👍' : '👎';
                             statusDiv.innerHTML = `<small class="badge badge-rl">${icon} Using accumulated feedback for this document class. Add more feedback anytime!</small>`;
                         }
                         
@@ -2137,12 +2138,12 @@
         }
 
         async function registerTemplate() {
-            console.log('ðŸ”§ [DEBUG] Register Template button clicked - FIXED VERSION v2');
+            console.log('🔧 [DEBUG] Register Template button clicked - FIXED VERSION v2');
             const documentClass = document.getElementById('documentClass').value.trim();
-            console.log('ðŸ”§ [DEBUG] Document class:', documentClass);
+            console.log('🔧 [DEBUG] Document class:', documentClass);
             
             if (!documentClass) {
-                console.log('ðŸ”§ [DEBUG] No document class provided');
+                console.log('🔧 [DEBUG] No document class provided');
                 showStatus('Please enter a document class name before registering.', 'warning');
                 return;
             }
@@ -2150,29 +2151,29 @@
             // Validate domain selection
             const selectedDomain = document.getElementById('domainSelect').value;
             if (!selectedDomain) {
-                console.log('ðŸ”§ [DEBUG] No domain selected');
+                console.log('🔧 [DEBUG] No domain selected');
                 showStatus('Please select a domain before registering the template.', 'warning');
                 document.getElementById('domainSelect').focus();
                 return;
             }
             
-            console.log('ðŸ”§ [DEBUG] Generated examples:', generatedExamples ? generatedExamples.length : 'undefined');
+            console.log('🔧 [DEBUG] Generated examples:', generatedExamples ? generatedExamples.length : 'undefined');
             if (!generatedExamples || generatedExamples.length === 0) {
-                console.log('ðŸ”§ [DEBUG] No generated examples available');
+                console.log('🔧 [DEBUG] No generated examples available');
                 showStatus('No examples to register. Please generate examples first.', 'warning');
                 return;
             }
             
             // Collect all the configuration data
-            console.log('ðŸ”§ [DEBUG] Collecting configuration data...');
-            console.log('ðŸ”§ [DEBUG] About to call getSchemaData()');
+            console.log('🔧 [DEBUG] Collecting configuration data...');
+            console.log('🔧 [DEBUG] About to call getSchemaData()');
             let extractionSchema;
             try {
                 extractionSchema = getSchemaData();
-                console.log('ðŸ”§ [DEBUG] getSchemaData() successful:', extractionSchema);
-                console.log('ðŸ”§ [DEBUG] Schema attributes count:', extractionSchema.length);
+                console.log('🔧 [DEBUG] getSchemaData() successful:', extractionSchema);
+                console.log('🔧 [DEBUG] Schema attributes count:', extractionSchema.length);
             } catch (error) {
-                console.error('ðŸ”§ [ERROR] getSchemaData() failed:', error);
+                console.error('🔧 [ERROR] getSchemaData() failed:', error);
                 showStatus('Error getting schema data. Please check your schema fields.', 'danger');
                 return;
             }
@@ -2180,19 +2181,19 @@
             const promptDescElement = document.getElementById('promptDescription');
             const outputSchemaElement = document.getElementById('outputSchema');
             
-            console.log('ðŸ”§ [DEBUG] Elements found:', {
+            console.log('🔧 [DEBUG] Elements found:', {
                 promptDescElement: !!promptDescElement,
                 outputSchemaElement: !!outputSchemaElement
             });
             
             if (!promptDescElement) {
-                console.error('ðŸ”§ [ERROR] promptDescription element not found!');
+                console.error('🔧 [ERROR] promptDescription element not found!');
                 showStatus('UI Error: Prompt description field not found. Please refresh the page.', 'danger');
                 return;
             }
             
             if (!outputSchemaElement) {
-                console.error('ðŸ”§ [ERROR] outputSchema element not found!');
+                console.error('🔧 [ERROR] outputSchema element not found!');
                 showStatus('UI Error: Output schema field not found. Please refresh the page.', 'danger');
                 return;
             }
@@ -2200,27 +2201,27 @@
             const promptDescription = promptDescElement.value;
             const outputSchema = outputSchemaElement.value;
             
-            console.log('ðŸ”§ [DEBUG] Extraction schema:', extractionSchema);
-            console.log('ðŸ”§ [DEBUG] Output schema raw:', outputSchema);
+            console.log('🔧 [DEBUG] Extraction schema:', extractionSchema);
+            console.log('🔧 [DEBUG] Output schema raw:', outputSchema);
             
             let parsedOutputSchema = {};
             try {
                 parsedOutputSchema = JSON.parse(outputSchema);
-                console.log('ðŸ”§ [DEBUG] Parsed output schema:', parsedOutputSchema);
+                console.log('🔧 [DEBUG] Parsed output schema:', parsedOutputSchema);
             } catch (e) {
-                console.log('ðŸ”§ [DEBUG] JSON parse error:', e);
+                console.log('🔧 [DEBUG] JSON parse error:', e);
                 showStatus('Invalid JSON in output schema. Please fix before registering.', 'warning');
                 return;
             }
             
             try {
-                console.log('ðŸ”§ [DEBUG] Preparing request data...');
+                console.log('🔧 [DEBUG] Preparing request data...');
                 const editedExamples = getEditedExamples();
-                console.log('ðŸ”§ [DEBUG] Edited examples:', editedExamples);
-                console.log('ðŸ”§ [DEBUG] Examples count:', editedExamples.length);
+                console.log('🔧 [DEBUG] Edited examples:', editedExamples);
+                console.log('🔧 [DEBUG] Examples count:', editedExamples.length);
                 if (editedExamples.length > 0) {
-                    console.log('ðŸ”§ [DEBUG] First example:', editedExamples[0]);
-                    console.log('ðŸ”§ [DEBUG] First example extractions:', editedExamples[0].extractions?.length);
+                    console.log('🔧 [DEBUG] First example:', editedExamples[0]);
+                    console.log('🔧 [DEBUG] First example extractions:', editedExamples[0].extractions?.length);
                 }
                 
                 const selectedDomain = document.getElementById('domainSelect').value;
@@ -2232,22 +2233,22 @@
                     output_schema: parsedOutputSchema,
                     domain_name: selectedDomain || null
                 };
-                console.log('ðŸ”§ [DEBUG] Full request data:', requestData);
+                console.log('🔧 [DEBUG] Full request data:', requestData);
                 
-                console.log('ðŸ”§ [DEBUG] Sending request to /register_template...');
+                console.log('🔧 [DEBUG] Sending request to /register_template...');
                 const response = await fetch('/register_template', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(requestData)
                 });
                 
-                console.log('ðŸ”§ [DEBUG] Response status:', response.status);
+                console.log('🔧 [DEBUG] Response status:', response.status);
                 const result = await response.json();
-                console.log('ðŸ”§ [DEBUG] Response data:', result);
+                console.log('🔧 [DEBUG] Response data:', result);
                 
                 if (result.success) {
-                    console.log('ðŸ”§ [DEBUG] Registration successful');
-                    showStatus(`âœ… ${result.message} You can now use this template in the Analyze Documents section.`, 'success');
+                    console.log('🔧 [DEBUG] Registration successful');
+                    showStatus(`✅ ${result.message} You can now use this template in the Analyze Documents section.`, 'success');
                     
                     // Show success modal or redirect option
                     setTimeout(() => {
@@ -2256,12 +2257,12 @@
                         }
                     }, 2000);
                 } else {
-                    console.log('ðŸ”§ [DEBUG] Registration failed:', result.error);
+                    console.log('🔧 [DEBUG] Registration failed:', result.error);
                     showStatus(`Registration failed: ${result.error}`, 'danger');
                 }
                 
             } catch (error) {
-                console.log('ðŸ”§ [DEBUG] Catch block error:', error);
+                console.log('🔧 [DEBUG] Catch block error:', error);
                 showStatus(`Error registering template: ${error.message}`, 'danger');
             }
         }
@@ -2321,12 +2322,12 @@
 
         // Update existing template function
         async function updateExistingTemplate() {
-            console.log('ðŸ”§ [DEBUG] Update Template button clicked');
+            console.log('🔧 [DEBUG] Update Template button clicked');
             const documentClass = document.getElementById('documentClass').value.trim();
-            console.log('ðŸ”§ [DEBUG] Document class:', documentClass);
+            console.log('🔧 [DEBUG] Document class:', documentClass);
             
             if (!documentClass) {
-                console.log('ðŸ”§ [DEBUG] No document class provided');
+                console.log('🔧 [DEBUG] No document class provided');
                 showStatus('Document class is required.', 'warning');
                 return;
             }
@@ -2334,27 +2335,27 @@
             // Validate domain selection
             const selectedDomain = document.getElementById('domainSelect').value;
             if (!selectedDomain) {
-                console.log('ðŸ”§ [DEBUG] No domain selected');
+                console.log('🔧 [DEBUG] No domain selected');
                 showStatus('Please select a domain before updating the template.', 'warning');
                 document.getElementById('domainSelect').focus();
                 return;
             }
             
-            console.log('ðŸ”§ [DEBUG] Generated examples:', generatedExamples ? generatedExamples.length : 'undefined');
+            console.log('🔧 [DEBUG] Generated examples:', generatedExamples ? generatedExamples.length : 'undefined');
             if (!generatedExamples || generatedExamples.length === 0) {
-                console.log('ðŸ”§ [DEBUG] No generated examples available');
+                console.log('🔧 [DEBUG] No generated examples available');
                 showStatus('No examples to update. Please generate examples first.', 'warning');
                 return;
             }
             
             // Collect all the configuration data
-            console.log('ðŸ”§ [DEBUG] Collecting configuration data...');
+            console.log('🔧 [DEBUG] Collecting configuration data...');
             let extractionSchema;
             try {
                 extractionSchema = getSchemaData();
-                console.log('ðŸ”§ [DEBUG] Schema data:', extractionSchema);
+                console.log('🔧 [DEBUG] Schema data:', extractionSchema);
             } catch (error) {
-                console.error('ðŸ”§ [ERROR] getSchemaData() failed:', error);
+                console.error('🔧 [ERROR] getSchemaData() failed:', error);
                 showStatus('Error getting schema data. Please check your schema fields.', 'danger');
                 return;
             }
@@ -2379,7 +2380,7 @@
             }
             
             try {
-                console.log('ðŸ”§ [DEBUG] Preparing update request...');
+                console.log('🔧 [DEBUG] Preparing update request...');
                 const editedExamples = getEditedExamples();
                 
                 const requestData = {
@@ -2392,7 +2393,7 @@
                     domain_name: selectedDomain
                 };
                 
-                console.log('ðŸ”§ [DEBUG] Sending update request to /update_template...');
+                console.log('🔧 [DEBUG] Sending update request to /update_template...');
                 const response = await fetch('/update_template', {
                     method: 'POST',
                     headers: {
@@ -2401,19 +2402,19 @@
                     body: JSON.stringify(requestData)
                 });
                 
-                console.log('ðŸ”§ [DEBUG] Update response status:', response.status);
+                console.log('🔧 [DEBUG] Update response status:', response.status);
                 const result = await response.json();
-                console.log('ðŸ”§ [DEBUG] Update result:', result);
+                console.log('🔧 [DEBUG] Update result:', result);
                 
                 if (result.success) {
-                    showStatus(`âœ… Template "${documentClass}" updated successfully!`, 'success');
+                    showStatus(`✅ Template "${documentClass}" updated successfully!`, 'success');
                 } else {
-                    console.error('ðŸ”§ [ERROR] Update failed:', result);
+                    console.error('🔧 [ERROR] Update failed:', result);
                     showStatus(`Failed to update template: ${result.detail || result.error}`, 'danger');
                 }
                 
             } catch (error) {
-                console.error('ðŸ”§ [ERROR] Update request failed:', error);
+                console.error('🔧 [ERROR] Update request failed:', error);
                 showStatus('Error updating template. Please try again.', 'danger');
             }
         }
@@ -2432,13 +2433,13 @@
         // Load template for editing
         async function loadTemplateForEdit(documentClass) {
             try {
-                console.log('ðŸ”§ [DEBUG] Loading template for edit:', documentClass);
+                console.log('🔧 [DEBUG] Loading template for edit:', documentClass);
                 const response = await fetch(`/get_template/${documentClass}`);
                 const result = await response.json();
 
                 if (result.success) {
                     const template = result.template;
-                    console.log('ðŸ”§ [DEBUG] Template loaded for edit:', template);
+                    console.log('🔧 [DEBUG] Template loaded for edit:', template);
 
                     // Pre-populate and DISABLE the document class field
                     const documentClassField = document.getElementById('documentClass');
@@ -2459,7 +2460,7 @@
                     // Pre-populate the domain selection (keep enabled for editing)
                     if (template.domain_name) {
                         document.getElementById('domainSelect').value = template.domain_name;
-                        console.log('ðŸ”§ [DEBUG] Pre-populated domain:', template.domain_name);
+                        console.log('🔧 [DEBUG] Pre-populated domain:', template.domain_name);
                     }
                     
                     // Change register button to update button
@@ -2499,19 +2500,19 @@
 
                     // Pre-populate existing examples if they exist
                     if (template.examples && template.examples.length > 0) {
-                        console.log('ðŸ”§ [DEBUG] Loading existing examples:', template.examples.length);
+                        console.log('🔧 [DEBUG] Loading existing examples:', template.examples.length);
                         
                         // Set global variables for existing examples
                         generatedExamples = template.examples;
                         currentRLSessionId = `edit_${template.document_class}_${Date.now()}`;
                         
                         // Show the examples section and populate
-                        console.log('ðŸ”§ [DEBUG] Setting generatedContent display to block');
+                        console.log('🔧 [DEBUG] Setting generatedContent display to block');
                         const generatedContentDiv = document.getElementById('generatedContent');
                         generatedContentDiv.style.display = 'block';
                         generatedContentDiv.style.visibility = 'visible';
                         generatedContentDiv.style.opacity = '1';
-                        console.log('ðŸ”§ [DEBUG] generatedContent display is now:', generatedContentDiv.style.display);
+                        console.log('🔧 [DEBUG] generatedContent display is now:', generatedContentDiv.style.display);
                         document.getElementById('promptDescription').value = template.prompt_description;
                         displayEditableExamples(template.examples);
                         
@@ -2521,7 +2522,7 @@
                         // Navigate to Step 2 (Examples) automatically - preserve state
                         showStepWithEditMode(2, false);
                         
-                        console.log('âœ… [DEBUG] Loaded existing examples in edit mode');
+                        console.log('✅ [DEBUG] Loaded existing examples in edit mode');
                     }
 
                     // Show edit mode indicator by updating breadcrumb
@@ -2530,7 +2531,7 @@
                         breadcrumb.innerHTML = `<i class="fas fa-edit me-2"></i>Edit Template: ${template.document_class}`;
                     }
 
-                    console.log('âœ… [DEBUG] Template pre-populated successfully');
+                    console.log('✅ [DEBUG] Template pre-populated successfully');
                 } else {
                     console.error(`Failed to load template: ${result.error}`);
                     alert(`Failed to load template: ${result.error}`);
@@ -2543,7 +2544,7 @@
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('ðŸ”§ [DEBUG] Page loaded, initializing...');
+            console.log('🔧 [DEBUG] Page loaded, initializing...');
             // Initialize theme
             initializeTheme();
             // Load available domains
@@ -2608,11 +2609,13 @@
             // Store current feedback globally
             currentPromptFeedback = feedbackType;
 
+            const selectedDomain = document.getElementById('domainSelect').value;
             const feedbackData = {
                 session_id: currentRLSessionId,
                 feedback_type: feedbackType,
                 feedback_source: 'prompt_description',
                 document_class: documentClass,
+                domain_name: selectedDomain || null,
                 prompt_text: promptDescription,
                 timestamp: new Date().toISOString()
             };
@@ -2627,7 +2630,7 @@
         function updatePromptFeedbackModalStatus(feedbackType) {
             const statusElement = document.getElementById('promptFeedbackStatus');
             if (statusElement) {
-                const feedbackIcon = feedbackType === 'positive' ? 'ðŸ‘' : 'ðŸ‘Ž';
+                const feedbackIcon = feedbackType === 'positive' ? '👍' : '👎';
                 const feedbackText = feedbackType === 'positive' ? 'Positive feedback' : 'Needs improvement';
                 statusElement.innerHTML = `AI will receive: <strong>${feedbackIcon} ${feedbackText}</strong>`;
             }
@@ -2672,7 +2675,7 @@
             const documentClass = document.getElementById('documentClass').value;
             
             if (!rating) {
-                showStatus('Please first click ðŸ‘ or ðŸ‘Ž on the main prompt feedback buttons.', 'warning');
+                showStatus('Please first click 👍 or 👎 on the main prompt feedback buttons.', 'warning');
                 return;
             }
 
@@ -2688,11 +2691,13 @@
                 improvement_suggestions: comments // For DSPy optimization
             };
 
+            const selectedDomain = document.getElementById('domainSelect').value;
             const feedbackData = {
                 session_id: currentRLSessionId,
                 feedback_type: 'detailed',
                 feedback_source: 'prompt_description',
                 document_class: documentClass,
+                domain_name: selectedDomain || null,
                 prompt_text: promptDescription,
                 detailed_feedback: detailedFeedback,
                 timestamp: new Date().toISOString()
@@ -2704,7 +2709,7 @@
             const modal = bootstrap.Modal.getInstance(document.getElementById('promptFeedbackModal'));
             modal.hide();
 
-            const feedbackIcon = rating === 'positive' ? 'ðŸ‘' : 'ðŸ‘Ž';
+            const feedbackIcon = rating === 'positive' ? '👍' : '👎';
             showStatus(`Detailed prompt feedback submitted: ${feedbackIcon} ${rating}`, 'success');
         }
 
@@ -2719,14 +2724,14 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    console.log('âœ… [RL] Prompt feedback stored successfully');
+                    console.log('✅ [RL] Prompt feedback stored successfully');
                     // Show feedback controls if this is the first feedback
                     showPromptFeedbackControls();
                 } else {
-                    console.error('âŒ [RL] Failed to store prompt feedback:', result.error);
+                    console.error('❌ [RL] Failed to store prompt feedback:', result.error);
                 }
             } catch (error) {
-                console.error('âŒ [RL] Error storing prompt feedback:', error);
+                console.error('❌ [RL] Error storing prompt feedback:', error);
             }
         }
 
@@ -2885,7 +2890,7 @@
         }
 
         function submitExampleFeedback(exampleIndex, feedbackType) {
-            console.log(`ðŸ§  [RL] Submitting ${feedbackType} feedback for example ${exampleIndex}`);
+            console.log(`🧠 [RL] Submitting ${feedbackType} feedback for example ${exampleIndex}`);
             
             // Visual feedback
             const statusSpan = document.getElementById(`feedbackStatus${exampleIndex}`);
@@ -2905,7 +2910,7 @@
             }
             
             // Update status
-            const icon = feedbackType === 'positive' ? 'ðŸ‘' : 'ðŸ‘Ž';
+            const icon = feedbackType === 'positive' ? '👍' : '👎';
             statusSpan.innerHTML = `<small class="text-muted">${icon} Feedback recorded</small>`;
             
             // Store feedback data
@@ -2992,13 +2997,15 @@
             try {
                 const documentClass = document.getElementById('documentClass').value.trim();
                 if (!documentClass || !feedbackData) {
-                    console.log('âš ï¸ [RL] Cannot store master feedback: missing document class or feedback data');
+                    console.log('⚠️ [RL] Cannot store master feedback: missing document class or feedback data');
                     return;
                 }
                 
                 // Prepare master feedback for storage
+                const selectedDomain = document.getElementById('domainSelect').value;
                 const masterFeedbackPayload = {
                     document_class: documentClass,
+                    domain_name: selectedDomain || null,
                     feedback_type: feedbackData.type,
                     timestamp: feedbackData.timestamp,
                     session_id: feedbackData.session_id || Date.now(),
@@ -3006,7 +3013,7 @@
                     examples: feedbackData.examples || null
                 };
                 
-                console.log('ðŸ§  [RL] Storing master feedback to server:', masterFeedbackPayload);
+                console.log('🧠 [RL] Storing master feedback to server:', masterFeedbackPayload);
                 
                 const response = await fetch('/api/feedback/master', {
                     method: 'POST',
@@ -3016,12 +3023,12 @@
                 
                 const result = await response.json();
                 if (result.success) {
-                    console.log('âœ… [RL] Master feedback stored successfully:', result.feedback_id);
+                    console.log('✅ [RL] Master feedback stored successfully:', result.feedback_id);
                 } else {
-                    console.error('âŒ [RL] Failed to store master feedback:', result.error);
+                    console.error('❌ [RL] Failed to store master feedback:', result.error);
                 }
             } catch (error) {
-                console.error('âŒ [RL] Error storing master feedback:', error);
+                console.error('❌ [RL] Error storing master feedback:', error);
             }
         }
 
@@ -3040,7 +3047,7 @@
                                 <div class="mb-3">
                                     <div class="alert alert-info">
                                         <i class="fas fa-info-circle me-2"></i>
-                                        <strong>Please first click ðŸ‘ or ðŸ‘Ž to give feedback</strong><br>
+                                        <strong>Please first click 👍 or 👎 to give feedback</strong><br>
                                         <span id="promptFeedbackStatus" class="text-muted">AI will receive: <em>No feedback selected yet</em></span>
                                     </div>
                                     <small class="text-muted">Add specific details below to help the AI learn from your feedback.</small>
@@ -3200,7 +3207,7 @@
                 detailed_feedback: detailedFeedback
             };
             
-            console.log('ðŸ§  [RL] Detailed feedback:', detailedFeedback);
+            console.log('🧠 [RL] Detailed feedback:', detailedFeedback);
             
             // Send to server
             sendDetailedFeedbackToServer(exampleIndex, detailedFeedback);
@@ -3211,7 +3218,7 @@
             
             // Update UI
             const statusSpan = document.getElementById(`feedbackStatus${exampleIndex}`);
-            statusSpan.innerHTML = `<small class="text-muted">ðŸ’¬ Detailed feedback: ${rating}â­</small>`;
+            statusSpan.innerHTML = `<small class="text-muted">💬 Detailed feedback: ${rating}⭐</small>`;
             
             showStatus(`Detailed feedback submitted for Example ${exampleIndex + 1}`, 'success');
         }
@@ -3358,10 +3365,10 @@
             validateDomainSelection();
             
             if (selectedDomain) {
-                console.log(`ðŸ“‚ Domain selected: ${selectedDomain}`);
+                console.log(`📂 Domain selected: ${selectedDomain}`);
                 showStatus(`Domain "${selectedDomain}" selected. Smart suggestions will be based on similar document types in this domain.`, 'info');
             } else {
-                console.log('ðŸ“‚ No domain selected');
+                console.log('📂 No domain selected');
             }
         }
 

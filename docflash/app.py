@@ -343,10 +343,10 @@ async def register_template(request: Request):
         if not domain_name:
             raise HTTPException(status_code=400, detail="Domain is required")
 
-        if db.template_exists(document_class):
+        if db.template_exists(document_class, domain_name):
             raise HTTPException(
                 status_code=409,
-                detail=f'A template for "{document_class}" already exists. Use a different name or delete the existing one.',
+                detail=f'A template for "{document_class}" in domain "{domain_name}" already exists. Use a different name or delete the existing one.',
             )
 
         template_id = db.register_template(
@@ -692,14 +692,14 @@ async def delete_template(document_class: str):
         template = db.get_template(document_class)
         domain_name = template.get("domain_name") if template else None
         
-        success = db.delete_template(document_class)
+        success = db.delete_template(document_class, domain_name)
 
         if success:
-            # Clean up all feedback data for this document class
+            # Clean up all feedback data for this document class in this domain
             try:
                 from docflash.rl_feedback_analyzer import feedback_analyzer
-                feedback_analyzer.delete_feedback_for_document_class(document_class)
-                print(f"🧠 [RL] Cleaned up feedback data for document class: {document_class}")
+                feedback_analyzer.delete_feedback_for_document_class(document_class, domain_name)
+                print(f"🧠 [RL] Cleaned up feedback data for document class: {document_class} in domain {domain_name}")
             except Exception as e:
                 print(f"⚠️ [RL] Warning: Could not clean up feedback data: {e}")
             
@@ -707,8 +707,8 @@ async def delete_template(document_class: str):
             try:
                 dspy_pipeline = get_dspy_pipeline()
                 if dspy_pipeline:
-                    dspy_pipeline.delete_feedback_for_document_class(document_class)
-                    print(f"🧠 [DSPy] Cleaned up DSPy feedback for document class: {document_class}")
+                    dspy_pipeline.delete_feedback_for_document_class(document_class, domain_name)
+                    print(f"🧠 [DSPy] Cleaned up DSPy feedback for document class: {document_class} in domain {domain_name}")
             except Exception as e:
                 print(f"⚠️ [DSPy] Warning: Could not clean up DSPy feedback: {e}")
             
@@ -779,10 +779,10 @@ async def update_template(request: Request):
             raise HTTPException(status_code=400, detail="Domain is required")
 
         # Check if original template exists
-        if not db.template_exists(original_class):
+        if not db.template_exists(original_class, domain_name):
             raise HTTPException(
                 status_code=404,
-                detail=f'Original template "{original_class}" not found',
+                detail=f'Original template "{original_class}" in domain "{domain_name}" not found',
             )
 
         # Prevent document class name changes
@@ -846,6 +846,7 @@ async def generate_examples(request: Request):
         additional_instructions = data.get("additional_instructions", "")
         # Model is now configured via environment variables
         document_class = data.get("document_class", "unknown")
+        domain_name = data.get("domain_name")
         
         # RL feedback data for regeneration
         rl_session_id = data.get("rl_session_id")
@@ -891,10 +892,12 @@ async def generate_examples(request: Request):
                         'primary': master_feedback_entries[0],  # Most recent for display
                         'all_entries': master_feedback_entries  # All entries for DSPy training
                     }
-                    print(f"🧠 [RL] Loaded {len(master_feedback_entries)} accumulated master feedback entries for document class: {document_class}")
+                    domain_text = f" in domain '{domain_name}'" if domain_name else ""
+                    print(f"🧠 [RL] Loaded {len(master_feedback_entries)} accumulated master feedback entries for document class: {document_class}{domain_text}")
                     print(f"🔄 [RL] Using most recent master feedback: {master_feedback_entries[0].get('feedback_type', 'unknown')}")
                 else:
-                    print(f"🔍 [RL] No accumulated master feedback found for document class: {document_class}")
+                    domain_text = f" in domain '{domain_name}'" if domain_name else ""
+                    print(f"🔍 [RL] No accumulated master feedback found for document class: {document_class}{domain_text}")
                     
             except Exception as e:
                 print(f"⚠️ [RL] Error loading accumulated master feedback: {e}")
@@ -942,7 +945,8 @@ async def generate_examples(request: Request):
         dspy_available = False
         if DSPY_ENABLED:
             try:
-                print(f"🧠 [DSPy] Checking DSPy availability for {document_class}")
+                domain_text = f" in domain '{domain_name}'" if domain_name else ""
+                print(f"🧠 [DSPy] Checking DSPy availability for {document_class}{domain_text}")
                 dspy_pipeline = get_dspy_pipeline()
                 
                 # Check if DSPy is actually configured and working
@@ -957,7 +961,8 @@ async def generate_examples(request: Request):
                         rl_session_id=rl_session_id,
                         master_feedback=effective_master_feedback,  # Use accumulated feedback
                         feedback_data=feedback_data,  # Legacy support
-                        additional_instructions=additional_instructions
+                        additional_instructions=additional_instructions,
+                        domain_name=domain_name
                     )
                     
                     # Only return DSPy result if it was actually successful (not fallback)
@@ -1031,7 +1036,7 @@ async def generate_examples(request: Request):
         
         # Reload stored feedback to ensure we have latest data (FastAPI restarts during dev)
         feedback_analyzer.load_stored_feedback()
-        feedback_analysis = feedback_analyzer.analyze_feedback_for_document_class(document_class)
+        feedback_analysis = feedback_analyzer.analyze_feedback_for_document_class(document_class, domain_name)
         
         print(f"🔍 [RL DEBUG] Looking for feedback for document_class: '{document_class}'")
         print(f"🔍 [RL DEBUG] Total feedback in store: {len(feedback_analyzer.feedback_store)}")
@@ -1370,8 +1375,7 @@ async def run_extraction(request: Request):
             "text_or_documents": input_text,
             "prompt_description": prompt_description,
             "examples": examples,
-            "language_model_type": type(extraction_model),
-            "language_model_params": language_model_params,
+            "model": extraction_model,  # Pass the actual model instance
             "extraction_passes": extraction_passes,
             "max_workers": max_workers,
             "max_char_buffer": max_char_buffer,
@@ -1616,14 +1620,9 @@ async def submit_prompt_feedback(request: Request):
         
         print(f"🧠 [RL PROMPT FEEDBACK] Session: {session_id}, Document: {document_class}, Type: {feedback_type}")
         
-        # Extract domain name from template
-        domain_name = None
-        try:
-            template = db.get_template(document_class)
-            domain_name = template.get("domain_name") if template else None
-            print(f"🧠 [RL] Found domain for prompt feedback {document_class}: {domain_name}")
-        except Exception as e:
-            print(f"⚠️ [RL] Could not extract domain for prompt feedback {document_class}: {e}")
+        # Get domain name from request data (sent from UI)
+        domain_name = data.get("domain_name")
+        print(f"🧠 [RL] Received domain for prompt feedback {document_class}: {domain_name}")
         
         # Create example data for prompt feedback storage
         example_data = {
@@ -1700,14 +1699,14 @@ async def submit_detailed_feedback(request: Request):
 
 
 @app.get("/feedback/stats/{document_class}")
-async def get_feedback_stats(document_class: str):
-    """Get RL learning statistics for a document class"""
+async def get_feedback_stats(document_class: str, domain_name: Optional[str] = None):
+    """Get RL learning statistics for a document class, optionally filtered by domain"""
     try:
         # Use the feedback analyzer to get comprehensive stats
-        stats = feedback_analyzer.get_feedback_stats(document_class)
+        stats = feedback_analyzer.get_feedback_stats(document_class, domain_name)
         
         # Get feedback analysis for optimization insights
-        analysis = feedback_analyzer.analyze_feedback_for_document_class(document_class)
+        analysis = feedback_analyzer.analyze_feedback_for_document_class(document_class, domain_name)
         
         return {
             "success": True,
@@ -1729,14 +1728,14 @@ async def get_feedback_stats(document_class: str):
 
 
 @app.get("/rl/debug/{document_class}")
-async def rl_debug_feedback(document_class: str):
+async def rl_debug_feedback(document_class: str, domain_name: Optional[str] = None):
     """Debug endpoint to check RL feedback analysis"""
     try:
         # Reload feedback
         feedback_analyzer.load_stored_feedback()
         
         # Get analysis
-        analysis = feedback_analyzer.analyze_feedback_for_document_class(document_class)
+        analysis = feedback_analyzer.analyze_feedback_for_document_class(document_class, domain_name)
         
         return {
             "success": True,
@@ -2121,14 +2120,9 @@ async def store_master_feedback(request: Request):
         
         from docflash.rl_feedback_analyzer import feedback_analyzer
         
-        # Extract domain name from template
-        domain_name = None
-        try:
-            template = db.get_template(document_class)
-            domain_name = template.get("domain_name") if template else None
-            print(f"🧠 [RL] Found domain for {document_class}: {domain_name}")
-        except Exception as e:
-            print(f"⚠️ [RL] Could not extract domain for {document_class}: {e}")
+        # Get domain name from request data (sent from UI)
+        domain_name = data.get("domain_name")
+        print(f"🧠 [RL] Received domain for master feedback {document_class}: {domain_name}")
         
         # Create unique feedback ID for master feedback (use timestamp for uniqueness, not session)
         from datetime import datetime

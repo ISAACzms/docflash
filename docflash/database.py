@@ -15,6 +15,19 @@ class DocumentTemplateDB:
         self.domains_file = domains_file
         self.templates = self._load_db()
         self.domains = self._load_domains()
+    
+    def _make_template_key(self, document_class: str, domain_name: str) -> str:
+        """Create a composite key for template storage"""
+        return f"{domain_name}:{document_class}"
+    
+    def _parse_template_key(self, key: str) -> tuple[str, str]:
+        """Parse a composite key back into domain_name and document_class"""
+        if ":" in key:
+            domain_name, document_class = key.split(":", 1)
+            return domain_name, document_class
+        else:
+            # Legacy key (just document_class)
+            return None, key
 
     def _load_db(self) -> Dict:
         """Load templates from JSON file"""
@@ -80,34 +93,97 @@ class DocumentTemplateDB:
             "usage_count": 0,
         }
 
-        # Use document_class as key, but keep template_id for reference
-        self.templates[document_class] = template
+        # Use composite key (domain:document_class) for unique identification
+        template_key = self._make_template_key(document_class, domain_name)
+        self.templates[template_key] = template
         self._save_db()
 
-        print(f"✅ Registered template for '{document_class}' with ID: {template_id}")
+        print(f"✅ Registered template for '{document_class}' in domain '{domain_name}' with ID: {template_id}")
         return template_id
 
-    def get_template(self, document_class: str) -> Optional[Dict]:
-        """Get template by document class"""
-        return self.templates.get(document_class)
+    def get_template(self, document_class: str, domain_name: Optional[str] = None) -> Optional[Dict]:
+        """Get template by document class and domain (with backward compatibility)"""
+        if domain_name is not None:
+            # Use composite key for domain-specific lookup
+            template_key = self._make_template_key(document_class, domain_name)
+            return self.templates.get(template_key)
+        else:
+            # Backward compatibility: try to find template by document_class only
+            # First try legacy key (just document_class)
+            template = self.templates.get(document_class)
+            if template:
+                return template
+            
+            # If not found, search through all templates for matching document_class
+            for key, template in self.templates.items():
+                if ":" in key:
+                    # Parse composite key
+                    _, stored_doc_class = self._parse_template_key(key)
+                    if stored_doc_class == document_class:
+                        return template
+            
+            return None
 
     def list_templates(self) -> List[Dict]:
         """List all registered templates"""
         return list(self.templates.values())
 
-    def update_template_usage(self, document_class: str):
+    def update_template_usage(self, document_class: str, domain_name: Optional[str] = None):
         """Update usage statistics for a template"""
-        if document_class in self.templates:
-            self.templates[document_class]["last_used"] = datetime.now().isoformat()
-            self.templates[document_class]["usage_count"] += 1
-            self._save_db()
+        if domain_name is not None:
+            template_key = self._make_template_key(document_class, domain_name)
+            if template_key in self.templates:
+                self.templates[template_key]["last_used"] = datetime.now().isoformat()
+                self.templates[template_key]["usage_count"] += 1
+                self._save_db()
+        else:
+            # Backward compatibility: find the template by document_class
+            template_key = None
+            # First try legacy key
+            if document_class in self.templates:
+                template_key = document_class
+            else:
+                # Search through composite keys
+                for key, template in self.templates.items():
+                    if ":" in key:
+                        _, stored_doc_class = self._parse_template_key(key)
+                        if stored_doc_class == document_class:
+                            template_key = key
+                            break
+            
+            if template_key:
+                self.templates[template_key]["last_used"] = datetime.now().isoformat()
+                self.templates[template_key]["usage_count"] += 1
+                self._save_db()
 
-    def delete_template(self, document_class: str) -> bool:
+    def delete_template(self, document_class: str, domain_name: Optional[str] = None) -> bool:
         """Delete a template"""
-        if document_class in self.templates:
-            del self.templates[document_class]
-            self._save_db()
-            return True
+        if domain_name is not None:
+            template_key = self._make_template_key(document_class, domain_name)
+            if template_key in self.templates:
+                del self.templates[template_key]
+                self._save_db()
+                return True
+        else:
+            # Backward compatibility: find and delete by document_class
+            template_key = None
+            # First try legacy key
+            if document_class in self.templates:
+                template_key = document_class
+            else:
+                # Search through composite keys
+                for key in self.templates.keys():
+                    if ":" in key:
+                        _, stored_doc_class = self._parse_template_key(key)
+                        if stored_doc_class == document_class:
+                            template_key = key
+                            break
+            
+            if template_key:
+                del self.templates[template_key]
+                self._save_db()
+                return True
+        
         return False
 
     def update_template(
@@ -121,11 +197,12 @@ class DocumentTemplateDB:
         additional_instructions: str = "",
     ) -> bool:
         """Update an existing document template (preserves metadata)"""
-        if document_class not in self.templates:
+        template_key = self._make_template_key(document_class, domain_name)
+        if template_key not in self.templates:
             return False
             
         # Get existing template to preserve metadata
-        existing_template = self.templates[document_class]
+        existing_template = self.templates[template_key]
         
         # Update template data while preserving metadata
         updated_template = {
@@ -143,15 +220,31 @@ class DocumentTemplateDB:
             "updated_at": datetime.now().isoformat(),
         }
         
-        self.templates[document_class] = updated_template
+        self.templates[template_key] = updated_template
         self._save_db()
         
-        print(f"✅ Updated template for '{document_class}'")
+        print(f"✅ Updated template for '{document_class}' in domain '{domain_name}'")
         return True
 
-    def template_exists(self, document_class: str) -> bool:
+    def template_exists(self, document_class: str, domain_name: Optional[str] = None) -> bool:
         """Check if template exists"""
-        return document_class in self.templates
+        if domain_name is not None:
+            template_key = self._make_template_key(document_class, domain_name)
+            return template_key in self.templates
+        else:
+            # Backward compatibility: check if any template with this document_class exists
+            # First try legacy key
+            if document_class in self.templates:
+                return True
+            
+            # Search through composite keys
+            for key in self.templates.keys():
+                if ":" in key:
+                    _, stored_doc_class = self._parse_template_key(key)
+                    if stored_doc_class == document_class:
+                        return True
+            
+            return False
 
     # Domain Management Methods
     def register_domain(self, domain_name: str, description: str = "") -> str:

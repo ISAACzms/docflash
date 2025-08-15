@@ -7,9 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* ChatGPT-style Theme System */
         :root {
-            /* Light theme colors (ChatGPT style) */
             --bg-primary: #ffffff;
             --bg-secondary: #f7f7f8;
             --bg-tertiary: #ececf1;
@@ -741,12 +739,12 @@
             
             // Load template details and show schema
             try {
-                console.log('ðŸ”§ [DEBUG] Loading template details for:', selectedTemplate);
+                console.log('🔧 [DEBUG] Loading template details for:', selectedTemplate);
                 const response = await fetch(`/api/template/${selectedTemplate}`);
                 const result = await response.json();
                 
                 if (result.success) {
-                    console.log('ðŸ”§ [DEBUG] Template loaded:', result.template);
+                    console.log('🔧 [DEBUG] Template loaded:', result.template);
                     displayTemplateSchema(result.template);
                     showStep(2);
                 } else {
@@ -759,7 +757,7 @@
         }
 
         function displayTemplateSchema(template) {
-            console.log('ðŸ”§ [DEBUG] Displaying template schema');
+            console.log('🔧 [DEBUG] Displaying template schema');
             // Create schema display area if it doesn't exist
             let schemaContainer = document.getElementById('templateSchemaContainer');
             if (!schemaContainer) {
@@ -793,7 +791,7 @@
                 `).join('');
                 
                 schemaList.innerHTML = schemaHtml;
-                console.log('ðŸ”§ [DEBUG] Schema displayed:', template.extraction_schema.length, 'attributes');
+                console.log('🔧 [DEBUG] Schema displayed:', template.extraction_schema.length, 'attributes');
             }
         }
 
