@@ -1158,9 +1158,7 @@ class DSPyDocFlashPipeline:
                                 "extraction_text": str(field_value) if not isinstance(field_value, list) else ", ".join(map(str, field_value)),
                                 "attributes": {
                                     "section": "document", 
-                                    "page_number": "1", 
-                                    "mode": "extract",
-                                    "dspy_generated": True
+                                    "page_number": "1"
                                 }
                             }
                             docflash_example["extractions"].append(extraction)
@@ -1203,7 +1201,7 @@ class DSPyDocFlashPipeline:
                 "extractions": [{
                     "extraction_class": field["attribute"],
                     "extraction_text": f"[Example {field['attribute']} #{i+1}]",
-                    "attributes": {"page_number": str(i+1), "mode": field.get("mode", "extract")}
+                    "attributes": {"page_number": str(i+1)}
                 } for field in extraction_schema[:3]]  # Limit to first 3 fields
             }
             fallback_examples.append(fallback_example)

@@ -37,6 +37,7 @@ from .rl_feedback_analyzer import feedback_analyzer
 
 # Import DSPy integration 
 from .dspy_integration import get_dspy_pipeline, should_trigger_optimization
+from .adaptive_metadata_enhancer import enhance_extraction_metadata_adaptive
 
 # DSPy configuration
 DSPY_ENABLED = True  # Feature flag to enable/disable DSPy
@@ -579,6 +580,8 @@ async def analyze_document(request: Request):
                     "extraction_class": extraction.extraction_class,
                     "extraction_text": extraction.extraction_text,
                     "attributes": extraction.attributes or {},
+                    "char_interval": extraction.char_interval,
+                    "alignment_status": extraction.alignment_status,
                     "char_position": (
                         f"{extraction.char_interval.start_pos}-{extraction.char_interval.end_pos}"
                         if extraction.char_interval
@@ -586,6 +589,18 @@ async def analyze_document(request: Request):
                     ),
                 }
             )
+
+        # Enhance metadata with adaptive learning from content and schema
+        document_schema = {"name": document_class, "description": f"Extraction schema for {document_class}"}
+        print(f"🔧 [DEBUG] Before enhancement: {len(extractions_list)} extractions")
+        if extractions_list:
+            print(f"🔧 [DEBUG] Sample before: {list(extractions_list[0].get('attributes', {}).keys())}")
+        
+        extractions_list = await enhance_extraction_metadata_adaptive(extractions_list, document_schema)
+        
+        if extractions_list:
+            print(f"🔧 [DEBUG] Sample after: {list(extractions_list[0].get('attributes', {}).keys())}")
+        print(f"🔧 [DEBUG] After enhancement: {len(extractions_list)} extractions")
 
         # Generate unique session ID for file management
         session_id = str(uuid.uuid4())[:8]
@@ -967,6 +982,34 @@ async def generate_examples(request: Request):
                     
                     # Only return DSPy result if it was actually successful (not fallback)
                     if dspy_result.get('success', False) and not dspy_result.get('fallback_used', False):
+                        # Enhance DSPy examples with adaptive metadata (parallel processing)
+                        if 'examples' in dspy_result:
+                            document_schema = {"name": document_class, "description": f"DSPy generation for {document_class}"}
+                            print(f"🔧 [DEBUG] Enhancing DSPy examples with adaptive metadata")
+                            
+                            # Collect DSPy enhancement tasks
+                            dspy_enhancement_tasks = []
+                            for example in dspy_result['examples']:
+                                if "extractions" in example:
+                                    dspy_enhancement_tasks.append((example, document_schema))
+                            
+                            # Process DSPy examples in parallel
+                            if dspy_enhancement_tasks:
+                                print(f"🔧 [DEBUG] Starting parallel DSPy enhancement for {len(dspy_enhancement_tasks)} examples")
+                                
+                                async def enhance_dspy_example(example, schema):
+                                    print(f"🔧 [DEBUG] Enhancing DSPy example with {len(example['extractions'])} extractions")
+                                    example["extractions"] = await enhance_extraction_metadata_adaptive(example["extractions"], schema)
+                                    print(f"🔧 [DEBUG] DSPy example enhancement complete")
+                                    return example
+                                
+                                await asyncio.gather(*[
+                                    enhance_dspy_example(example, schema) 
+                                    for example, schema in dspy_enhancement_tasks
+                                ])
+                                
+                                print(f"🔧 [DEBUG] Parallel DSPy enhancement completed for {len(dspy_enhancement_tasks)} examples")
+                        
                         # Check if optimization should be triggered
                         if should_trigger_optimization():
                             print("🔄 [DSPy] Triggering background optimization...")
@@ -1103,22 +1146,22 @@ Good Output:
                 {{
                     "extraction_class": "medication",
                     "extraction_text": "Ibuprofen",
-                    "attributes": {{"section": "medications", "page_number": "1", "mode": "extract"}}
+                    "attributes": {{"section": "medications", "page_number": "1"}}
                 }},
                 {{
                     "extraction_class": "dosage", 
                     "extraction_text": "400mg twice daily",
-                    "attributes": {{"section": "medications", "page_number": "1", "mode": "extract"}}
+                    "attributes": {{"section": "medications", "page_number": "1"}}
                 }},
                 {{
                     "extraction_class": "risk_level",
                     "extraction_text": "Moderate - frequent NSAID use for chronic condition",
-                    "attributes": {{"section": "analysis", "page_number": "1", "mode": "generate"}}
+                    "attributes": {{"section": "analysis", "page_number": "1"}}
                 }},
                 {{
                     "extraction_class": "patient_summary",
                     "extraction_text": "45-year-old with recurring chronic back pain, multiple prescriptions this year",
-                    "attributes": {{"section": "analysis", "page_number": "1", "mode": "generate"}}
+                    "attributes": {{"section": "analysis", "page_number": "1"}}
                 }}
             ]
         }}
@@ -1130,7 +1173,7 @@ Good Output:
 2. Generate 2-4 diverse, realistic ExampleData instances 
 3. For EXTRACT fields: Use exact text spans from the document - copy verbatim
 4. For GENERATE fields: Create interpreted/derived content like summaries, risk assessments, classifications
-5. Include meaningful attributes with "mode": "extract" or "mode": "generate"
+5. Include meaningful attributes like section and page_number
 6. Ensure extraction_class names match the provided schema attributes exactly
 7. Make extractions realistic for the document type
 8. Order extractions by appearance in text when possible
@@ -1146,7 +1189,7 @@ Return ONLY a JSON object with this exact structure:
                 {{
                     "extraction_class": "schema_attribute_name",
                     "extraction_text": "exact text from document",
-                    "attributes": {{"section": "category", "page_number": "1", "additional_context": "value"}}
+                    "attributes": {{"section": "category", "page_number": "1"}}
                 }}
             ]
         }}
@@ -1174,11 +1217,37 @@ Return ONLY a JSON object with this exact structure:
 
         generated_data = json.loads(response_text)
 
-        # Enhance examples with metadata for RL tracking
+        # Enhance examples with metadata for RL tracking AND adaptive semantic metadata
         enhanced_examples = generated_data.get("examples", [])
+        # Prepare examples metadata
+        document_schema = {"name": document_class, "description": f"Example generation for {document_class}"}
+        enhancement_tasks = []
+        
         for example in enhanced_examples:
             example["document_class"] = document_class
             example["generation_timestamp"] = datetime.now().isoformat()
+            
+            # Collect enhancement tasks for parallel processing
+            if "extractions" in example:
+                enhancement_tasks.append((example, document_schema))
+        
+        # Apply adaptive metadata enhancement to all examples in parallel
+        if enhancement_tasks:
+            print(f"🔧 [DEBUG] Starting parallel enhancement for {len(enhancement_tasks)} examples")
+            
+            async def enhance_example_extractions(example, schema):
+                print(f"🔧 [DEBUG] Enhancing example with {len(example['extractions'])} extractions")
+                example["extractions"] = await enhance_extraction_metadata_adaptive(example["extractions"], schema)
+                print(f"🔧 [DEBUG] Example enhancement complete")
+                return example
+            
+            # Process all examples in parallel
+            await asyncio.gather(*[
+                enhance_example_extractions(example, schema) 
+                for example, schema in enhancement_tasks
+            ])
+            
+            print(f"🔧 [DEBUG] Parallel enhancement completed for {len(enhancement_tasks)} examples")
         
         rl_session_id = str(uuid.uuid4())[:8]
         rl_message = "Examples generated successfully!"
@@ -1400,6 +1469,8 @@ async def run_extraction(request: Request):
                     "extraction_class": extraction.extraction_class,
                     "extraction_text": extraction.extraction_text,
                     "attributes": extraction.attributes or {},
+                    "char_interval": extraction.char_interval,
+                    "alignment_status": extraction.alignment_status,
                     "char_position": (
                         f"{extraction.char_interval.start_pos}-{extraction.char_interval.end_pos}"
                         if extraction.char_interval
@@ -1407,6 +1478,18 @@ async def run_extraction(request: Request):
                     ),
                 }
             )
+
+        # Enhance metadata with adaptive learning from content and schema
+        document_schema = {"name": document_class, "description": f"Extraction schema for {document_class}"}
+        print(f"🔧 [DEBUG] Before enhancement: {len(extractions_list)} extractions")
+        if extractions_list:
+            print(f"🔧 [DEBUG] Sample before: {list(extractions_list[0].get('attributes', {}).keys())}")
+        
+        extractions_list = await enhance_extraction_metadata_adaptive(extractions_list, document_schema)
+        
+        if extractions_list:
+            print(f"🔧 [DEBUG] Sample after: {list(extractions_list[0].get('attributes', {}).keys())}")
+        print(f"🔧 [DEBUG] After enhancement: {len(extractions_list)} extractions")
 
         # Generate unique session ID
         session_id = str(uuid.uuid4())[:8]
