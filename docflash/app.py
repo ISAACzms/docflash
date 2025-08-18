@@ -37,10 +37,13 @@ from .rl_feedback_analyzer import feedback_analyzer
 
 # Import DSPy integration 
 from .dspy_integration import get_dspy_pipeline, should_trigger_optimization
-from .adaptive_metadata_enhancer import enhance_extraction_metadata_adaptive
+from .adaptive_metadata_enhancer import enhance_extraction_metadata_adaptive, MetadataRichness
 
 # DSPy configuration
 DSPY_ENABLED = True  # Feature flag to enable/disable DSPy
+
+# Metadata enhancement configuration
+DEFAULT_METADATA_RICHNESS = MetadataRichness.MEDIUM  # Default richness level
 
 # FastAPI app initialization
 app = FastAPI(
@@ -596,7 +599,8 @@ async def analyze_document(request: Request):
         if extractions_list:
             print(f"🔧 [DEBUG] Sample before: {list(extractions_list[0].get('attributes', {}).keys())}")
         
-        extractions_list = await enhance_extraction_metadata_adaptive(extractions_list, document_schema)
+        # Use HIGH richness for analyze_document (template-based analysis)
+        extractions_list = await enhance_extraction_metadata_adaptive(extractions_list, document_schema, MetadataRichness.HIGH)
         
         if extractions_list:
             print(f"🔧 [DEBUG] Sample after: {list(extractions_list[0].get('attributes', {}).keys())}")
@@ -740,6 +744,11 @@ async def delete_template(document_class: str):
                 except Exception as e:
                     print(f"⚠️ [DSPy] Warning: Could not clean up saved model: {e}")
             
+            # Update domain statistics to reflect the deleted template
+            if domain_name:
+                db.update_domain_statistics()
+                print(f"📊 Updated domain statistics after template deletion")
+            
             return {
                 "success": True,
                 "message": f'Template "{document_class}" and all associated data deleted successfully!',
@@ -862,6 +871,14 @@ async def generate_examples(request: Request):
         # Model is now configured via environment variables
         document_class = data.get("document_class", "unknown")
         domain_name = data.get("domain_name")
+        metadata_richness = data.get("metadata_richness", DEFAULT_METADATA_RICHNESS.value)
+        
+        # Convert string to MetadataRichness enum
+        if isinstance(metadata_richness, str):
+            try:
+                metadata_richness = MetadataRichness(metadata_richness)
+            except ValueError:
+                metadata_richness = DEFAULT_METADATA_RICHNESS
         
         # RL feedback data for regeneration
         rl_session_id = data.get("rl_session_id")
@@ -999,7 +1016,8 @@ async def generate_examples(request: Request):
                                 
                                 async def enhance_dspy_example(example, schema):
                                     print(f"🔧 [DEBUG] Enhancing DSPy example with {len(example['extractions'])} extractions")
-                                    example["extractions"] = await enhance_extraction_metadata_adaptive(example["extractions"], schema)
+                                    # Use user-specified richness for DSPy example enhancement 
+                                    example["extractions"] = await enhance_extraction_metadata_adaptive(example["extractions"], schema, metadata_richness)
                                     print(f"🔧 [DEBUG] DSPy example enhancement complete")
                                     return example
                                 
@@ -1215,7 +1233,15 @@ Return ONLY a JSON object with this exact structure:
         if response_text.startswith("```"):
             response_text = response_text[3:]
 
-        generated_data = json.loads(response_text)
+        try:
+            generated_data = json.loads(response_text)
+        except json.JSONDecodeError as e:
+            print(f"❌ Failed to parse LLM response as JSON: {e}")
+            print(f"Raw response (first 500 chars): {response_text[:500]}")
+            raise HTTPException(status_code=500, detail=f"Failed to parse LLM response: {e}")
+        except Exception as e:
+            print(f"❌ Unexpected error parsing LLM response: {e}")
+            raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
 
         # Enhance examples with metadata for RL tracking AND adaptive semantic metadata
         enhanced_examples = generated_data.get("examples", [])
@@ -1237,7 +1263,8 @@ Return ONLY a JSON object with this exact structure:
             
             async def enhance_example_extractions(example, schema):
                 print(f"🔧 [DEBUG] Enhancing example with {len(example['extractions'])} extractions")
-                example["extractions"] = await enhance_extraction_metadata_adaptive(example["extractions"], schema)
+                # Use user-specified richness for example generation enhancement
+                example["extractions"] = await enhance_extraction_metadata_adaptive(example["extractions"], schema, metadata_richness)
                 print(f"🔧 [DEBUG] Example enhancement complete")
                 return example
             
@@ -1372,6 +1399,7 @@ async def run_extraction(request: Request):
         prompt_description = data.get("prompt_description", "")
         examples_data = data.get("examples", [])
         output_schema = data.get("output_schema", {})
+        document_class = data.get("document_class", "unknown")  # Add document_class parameter
         # Model is now configured via environment variables
         extraction_passes = data.get("extraction_passes", 1)
         max_workers = data.get("max_workers", 10)
@@ -1485,7 +1513,15 @@ async def run_extraction(request: Request):
         if extractions_list:
             print(f"🔧 [DEBUG] Sample before: {list(extractions_list[0].get('attributes', {}).keys())}")
         
-        extractions_list = await enhance_extraction_metadata_adaptive(extractions_list, document_schema)
+        # Allow richness level to be configured per request or use default
+        richness_level = data.get("metadata_richness", DEFAULT_METADATA_RICHNESS.value)
+        if isinstance(richness_level, str):
+            try:
+                richness_level = MetadataRichness(richness_level)
+            except ValueError:
+                richness_level = DEFAULT_METADATA_RICHNESS
+        
+        extractions_list = await enhance_extraction_metadata_adaptive(extractions_list, document_schema, richness_level)
         
         if extractions_list:
             print(f"🔧 [DEBUG] Sample after: {list(extractions_list[0].get('attributes', {}).keys())}")
@@ -1504,11 +1540,56 @@ async def run_extraction(request: Request):
         final_output = None
         if output_schema:
             print("🤖 Transforming to target schema...")
+            
+            # Convert extractions to JSON-serializable format
+            try:
+                serializable_extractions = []
+                for extraction in extractions_list:
+                    serializable_extraction = {}
+                    for key, value in extraction.items():
+                        if key == 'char_interval':
+                            # Convert char_interval to serializable format
+                            if value and hasattr(value, 'start_pos') and hasattr(value, 'end_pos'):
+                                serializable_extraction[key] = {
+                                    'start_pos': value.start_pos,
+                                    'end_pos': value.end_pos
+                                }
+                            else:
+                                serializable_extraction[key] = None
+                        elif key == 'attributes' and isinstance(value, dict):
+                            # Ensure attributes are JSON serializable
+                            serializable_attrs = {}
+                            for attr_key, attr_value in value.items():
+                                try:
+                                    # Try to JSON serialize the attribute value
+                                    json.dumps(attr_value)
+                                    serializable_attrs[attr_key] = attr_value
+                                except (TypeError, ValueError):
+                                    # Convert non-serializable objects to string
+                                    serializable_attrs[attr_key] = str(attr_value)
+                            serializable_extraction[key] = serializable_attrs
+                        else:
+                            # Handle any other non-serializable objects
+                            try:
+                                json.dumps(value)
+                                serializable_extraction[key] = value
+                            except (TypeError, ValueError):
+                                serializable_extraction[key] = str(value)
+                    serializable_extractions.append(serializable_extraction)
+                
+                extractions_json = json.dumps(serializable_extractions, indent=2)
+            except Exception as e:
+                print(f"Error serializing extractions for schema transformation: {e}")
+                print(f"Error type: {type(e).__name__}")
+                print(f"Error args: {e.args}")
+                # Fallback to basic representation
+                extractions_json = str(extractions_list)
+            
             transformation_prompt = f"""
 Transform the following LangExtract extraction results into the specified output schema format.
 
 **EXTRACTION RESULTS:**
-{json.dumps(extractions_list, indent=2)}
+{extractions_json}
 
 **TARGET SCHEMA:**
 {json.dumps(output_schema, indent=2)}
@@ -1531,9 +1612,11 @@ Transform the following LangExtract extraction results into the specified output
 """
 
             try:
+                print("📝 Running schema transformation...")
                 batch_result = list(extraction_model.infer([transformation_prompt]))
                 transformation_result = batch_result[0][0]
                 json_text = transformation_result.output
+                print("✅ Schema transformation inference completed")
 
                 # Clean response
                 json_text = json_text.strip()
@@ -1544,9 +1627,17 @@ Transform the following LangExtract extraction results into the specified output
                 if json_text.startswith("```"):
                     json_text = json_text[3:]
 
+                print("🔧 Parsing transformed JSON...")
                 final_output = json.loads(json_text)
+                print("✅ Schema transformation completed successfully")
+            except json.JSONDecodeError as e:
+                print(f"❌ JSON parsing error in schema transformation: {e}")
+                print(f"Raw JSON response: {json_text[:500]}...")
+                final_output = output_schema
             except Exception as e:
-                print(f"Schema transformation failed: {e}")
+                print(f"❌ Schema transformation failed: {e}")
+                print(f"Error type: {type(e).__name__}")
+                print(f"Error args: {e.args}")
                 final_output = output_schema
 
         # Generate visualization

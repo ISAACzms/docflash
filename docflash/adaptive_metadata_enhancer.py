@@ -1,6 +1,7 @@
 """
 Adaptive Metadata Enhancement that infers domain and semantics from content and schema
 No fixed document types - everything learned from actual data
+Supports configurable richness levels: NONE, LOW, MEDIUM, HIGH
 """
 
 import dspy
@@ -8,10 +9,43 @@ from typing import Dict, List, Any, Optional
 import json
 import asyncio
 from collections import defaultdict, Counter
+from enum import Enum
+
+
+class MetadataRichness(Enum):
+    """Metadata enhancement richness levels"""
+    NONE = "none"      # No enhancement - keep existing attributes only
+    LOW = "low"        # Basic entity types only
+    MEDIUM = "medium"  # + Domain classification and functional roles  
+    HIGH = "high"      # + Full semantic analysis and relationships
+
+
+# DSPy Signatures for different richness levels
+
+class BasicEntityClassification(dspy.Signature):
+    """LOW richness: Basic entity type classification only"""
+    
+    entity_class = dspy.InputField(desc="The extraction class name")
+    entity_text = dspy.InputField(desc="The extracted text value")
+    context_hints = dspy.InputField(desc="Nearby entities for context")
+    
+    entity_type = dspy.OutputField(desc="Basic type: person, organization, amount, date, location, product, concept, etc.")
+
+
+class EntityWithRelationships(dspy.Signature):
+    """MEDIUM richness: Entity types + related entities"""
+    
+    entity_class = dspy.InputField(desc="The extraction class name")
+    entity_text = dspy.InputField(desc="The extracted text value")
+    peer_entities = dspy.InputField(desc="Other entities in same document")
+    document_context = dspy.InputField(desc="Document type hints from schema")
+    
+    entity_type = dspy.OutputField(desc="Basic entity type (person, organization, amount, date, location, etc.)")
+    related_entities = dspy.OutputField(desc="List of related entity classes that appear nearby or connect to this entity")
 
 
 class ContentBasedDomainInference(dspy.Signature):
-    """Infer document domain and semantic context from content and extraction schema"""
+    """HIGH richness: Infer document domain and semantic context from content and extraction schema"""
     
     # Input - what we observe
     extraction_classes = dspy.InputField(desc="List of entity classes being extracted (e.g., ['client_name', 'medication', 'invoice_amount'])")
@@ -25,22 +59,20 @@ class ContentBasedDomainInference(dspy.Signature):
     entity_nature = dspy.OutputField(desc="Nature of entities in this domain (e.g., 'people_organizations_money', 'patients_treatments', 'companies_amounts_dates')")
 
 
-class ContextAwareSemanticGenerator(dspy.Signature):
-    """Generate semantic attributes based on inferred domain context"""
+class SemanticAnalysisGenerator(dspy.Signature):
+    """HIGH richness: Full semantic analysis with relationships"""
     
-    # Input context (no fixed domains)
     entity_class = dspy.InputField(desc="The extraction class")
     entity_text = dspy.InputField(desc="The extracted text")
+    peer_entities = dspy.InputField(desc="Other entities in same document")
+    document_context = dspy.InputField(desc="Document type and context")
     inferred_domain = dspy.InputField(desc="Domain inferred from content analysis")
     semantic_context = dspy.InputField(desc="Specific semantic context")
-    peer_entities = dspy.InputField(desc="Other entities in same schema/document")
-    document_section = dspy.InputField(desc="Section where found")
     
-    # Output - context-aware semantics
-    functional_role = dspy.OutputField(desc="What role this entity plays in the domain context")
-    semantic_category = dspy.OutputField(desc="Category that makes sense for this domain")
-    contextual_significance = dspy.OutputField(desc="Why this entity matters in this specific context")
-    relationship_hints = dspy.OutputField(desc="Likely relationships with peer entities")
+    entity_type = dspy.OutputField(desc="Basic entity type")
+    related_entities = dspy.OutputField(desc="List of related entity classes")
+    relationship_types = dspy.OutputField(desc="Types of relationships with other entities (e.g., 'receives_treatment', 'owns_property')")
+    semantic_context_output = dspy.OutputField(desc="Specific context this entity appears in (e.g., 'patient_care', 'financial_transactions')")
 
 
 class AdaptiveRelationshipInference(dspy.Signature):
@@ -60,37 +92,176 @@ class AdaptiveRelationshipInference(dspy.Signature):
 
 
 class AdaptiveMetadataEnhancer:
-    """Fully adaptive metadata enhancer - learns everything from content"""
+    """Fully adaptive metadata enhancer with configurable richness levels"""
     
-    def __init__(self):
+    def __init__(self, richness_level: MetadataRichness = MetadataRichness.MEDIUM):
+        self.richness_level = richness_level
+        
         # Check DSPy availability
         try:
             if dspy.settings.lm is None:
-                print("⚠️ DSPy LM not configured, using adaptive fallback mode")
+                print(f"⚠️ DSPy LM not configured, richness level forced to NONE")
                 self.use_dspy = False
+                self.richness_level = MetadataRichness.NONE
             else:
                 self.use_dspy = True
         except:
             self.use_dspy = False
+            self.richness_level = MetadataRichness.NONE
         
+        # Initialize DSPy predictors based on richness level
         if self.use_dspy:
-            self.domain_inferrer = dspy.Predict(ContentBasedDomainInference)
-            self.semantic_generator = dspy.Predict(ContextAwareSemanticGenerator)
-            self.relationship_inferrer = dspy.Predict(AdaptiveRelationshipInference)
+            if self.richness_level in [MetadataRichness.LOW, MetadataRichness.MEDIUM, MetadataRichness.HIGH]:
+                self.basic_classifier = dspy.Predict(BasicEntityClassification)
+            
+            if self.richness_level in [MetadataRichness.MEDIUM, MetadataRichness.HIGH]:
+                self.relationship_classifier = dspy.Predict(EntityWithRelationships)
+            
+            if self.richness_level == MetadataRichness.HIGH:
+                self.domain_inferrer = dspy.Predict(ContentBasedDomainInference)
+                self.semantic_generator = dspy.Predict(SemanticAnalysisGenerator)
+                self.relationship_inferrer = dspy.Predict(AdaptiveRelationshipInference)
+            else:
+                self.domain_inferrer = None
+                self.semantic_generator = None 
+                self.relationship_inferrer = None
         else:
+            # No DSPy available
+            self.basic_classifier = None
+            self.relationship_classifier = None
             self.domain_inferrer = None
             self.semantic_generator = None 
             self.relationship_inferrer = None
     
     async def enhance_extractions(self, extractions: List[Dict], document_schema: Dict = None) -> List[Dict]:
-        """Enhance extractions with adaptive semantic metadata asynchronously"""
+        """Enhance extractions with adaptive semantic metadata at specified richness level"""
+        
+        if self.richness_level == MetadataRichness.NONE:
+            # No enhancement - return as-is
+            return extractions
+        
+        if self.richness_level == MetadataRichness.LOW:
+            return await self._enhance_low_richness(extractions)
+        
+        elif self.richness_level == MetadataRichness.MEDIUM:
+            return await self._enhance_medium_richness(extractions, document_schema)
+        
+        elif self.richness_level == MetadataRichness.HIGH:
+            return await self._enhance_high_richness(extractions, document_schema)
+        
+        return extractions
+    
+    async def _enhance_low_richness(self, extractions: List[Dict]) -> List[Dict]:
+        """LOW richness: Basic entity type classification only"""
+        
+        if not self.basic_classifier:
+            return extractions
+        
+        enhanced = []
+        for extraction in extractions:
+            enhanced_extraction = extraction.copy()
+            current_attrs = extraction.get('attributes', {})
+            
+            # Keep existing attributes
+            enhanced_attrs = current_attrs.copy()
+            
+            try:
+                # Get context from peer entities
+                peer_entities = [ext.get('extraction_class', '') for ext in extractions if ext != extraction]
+                context_hints = ', '.join(peer_entities[:3])  # First 3 for context
+                
+                # Basic entity classification
+                result = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: self.basic_classifier(
+                        entity_class=extraction.get('extraction_class', ''),
+                        entity_text=extraction.get('extraction_text', ''),
+                        context_hints=context_hints
+                    )
+                )
+                
+                enhanced_attrs['entity_type'] = result.entity_type
+                
+            except Exception as e:
+                print(f"⚠️ Low richness enhancement failed for {extraction.get('extraction_class', '')}: {e}")
+                enhanced_attrs['entity_type'] = 'unknown'
+            
+            enhanced_extraction['attributes'] = enhanced_attrs
+            enhanced.append(enhanced_extraction)
+        
+        return enhanced
+    
+    async def _enhance_medium_richness(self, extractions: List[Dict], document_schema: Dict = None) -> List[Dict]:
+        """MEDIUM richness: Entity types + related entities"""
+        
+        if not self.relationship_classifier:
+            return await self._enhance_low_richness(extractions)
+        
+        enhanced = []
+        for extraction in extractions:
+            enhanced_extraction = extraction.copy()
+            current_attrs = extraction.get('attributes', {})
+            
+            # Keep existing attributes
+            enhanced_attrs = current_attrs.copy()
+            
+            try:
+                # Get context from peer entities and schema
+                peer_entities = [ext.get('extraction_class', '') for ext in extractions if ext != extraction]
+                peer_context = ', '.join(peer_entities)
+                
+                document_context = document_schema.get('description', '') if document_schema else ''
+                if not document_context:
+                    document_context = document_schema.get('name', '') if document_schema else ''
+                
+                # Entity with relationships classification
+                result = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: self.relationship_classifier(
+                        entity_class=extraction.get('extraction_class', ''),
+                        entity_text=extraction.get('extraction_text', ''),
+                        peer_entities=peer_context,
+                        document_context=document_context
+                    )
+                )
+                
+                enhanced_attrs.update({
+                    'entity_type': result.entity_type,
+                    'related_entities': result.related_entities
+                })
+                
+            except Exception as e:
+                print(f"⚠️ Medium richness enhancement failed for {extraction.get('extraction_class', '')}: {e}")
+                # Fallback to low richness
+                try:
+                    result = await asyncio.get_event_loop().run_in_executor(
+                        None,
+                        lambda: self.basic_classifier(
+                            entity_class=extraction.get('extraction_class', ''),
+                            entity_text=extraction.get('extraction_text', ''),
+                            context_hints=', '.join(peer_entities[:3])
+                        )
+                    )
+                    enhanced_attrs['entity_type'] = result.entity_type
+                    enhanced_attrs['related_entities'] = []  # Empty list as fallback
+                except:
+                    enhanced_attrs['entity_type'] = 'unknown'
+                    enhanced_attrs['related_entities'] = []
+            
+            enhanced_extraction['attributes'] = enhanced_attrs
+            enhanced.append(enhanced_extraction)
+        
+        return enhanced
+    
+    async def _enhance_high_richness(self, extractions: List[Dict], document_schema: Dict = None) -> List[Dict]:
+        """HIGH richness: Full semantic analysis (original behavior)"""
         
         # Step 1: Infer domain context from actual content
         domain_context = await self._infer_domain_context(extractions, document_schema)
         
         # Step 2: Generate semantic attributes using inferred context (parallel processing)
         enhancement_tasks = [
-            self._enhance_single_extraction(extraction, extractions, domain_context)
+            self._enhance_single_extraction_high(extraction, extractions, domain_context)
             for extraction in extractions
         ]
         enhanced_attributes = await asyncio.gather(*enhancement_tasks)
@@ -223,22 +394,18 @@ class AdaptiveMetadataEnhancer:
             'confidence_score': max(domain_scores.values()) if domain_scores else 1
         }
     
-    async def _enhance_single_extraction(self, extraction: Dict, all_extractions: List[Dict], domain_context: Dict) -> Dict:
-        """Generate semantic attributes using inferred domain context"""
+    async def _enhance_single_extraction_high(self, extraction: Dict, all_extractions: List[Dict], domain_context: Dict) -> Dict:
+        """Generate full semantic attributes for HIGH richness"""
         
         current_attrs = extraction.get('attributes', {})
         enhanced_attrs = current_attrs.copy()
         
-        # Keep useful existing attributes
-        if 'page_number' in current_attrs:
-            enhanced_attrs['page_number'] = current_attrs['page_number']
-        
         entity_class = extraction.get('extraction_class', '')
         entity_text = extraction.get('extraction_text', '')
-        document_section = current_attrs.get('section', '')
         
         # Get peer entities for context
         peer_entities = [ext.get('extraction_class') for ext in all_extractions if ext != extraction]
+        document_context = f"Domain: {domain_context['domain_category']}, Context: {domain_context['semantic_context']}"
         
         if self.use_dspy and self.semantic_generator:
             try:
@@ -248,27 +415,25 @@ class AdaptiveMetadataEnhancer:
                     lambda: self.semantic_generator(
                         entity_class=entity_class,
                         entity_text=entity_text,
-                        inferred_domain=domain_context['domain_category'],
-                        semantic_context=domain_context['semantic_context'],
                         peer_entities=str(peer_entities),
-                        document_section=document_section
+                        document_context=document_context,
+                        inferred_domain=domain_context['domain_category'],
+                        semantic_context=domain_context['semantic_context']
                     )
                 )
                 
                 enhanced_attrs.update({
-                    'functional_role': semantic_result.functional_role,
-                    'semantic_category': semantic_result.semantic_category,
-                    'contextual_significance': semantic_result.contextual_significance,
-                    'relationship_hints': semantic_result.relationship_hints,
-                    'inferred_domain': domain_context['domain_category'],
-                    'semantic_context': domain_context['semantic_context']
+                    'entity_type': semantic_result.entity_type,
+                    'related_entities': semantic_result.related_entities,
+                    'relationship_types': semantic_result.relationship_types,
+                    'semantic_context': semantic_result.semantic_context_output
                 })
                 
             except Exception as e:
-                print(f"⚠️ Semantic generation failed for {entity_class}: {e}")
-                enhanced_attrs.update(self._adaptive_fallback_attributes(entity_class, entity_text, domain_context))
+                print(f"⚠️ HIGH richness enhancement failed for {entity_class}: {e}")
+                enhanced_attrs.update(self._high_fallback_attributes(entity_class, entity_text, domain_context))
         else:
-            enhanced_attrs.update(self._adaptive_fallback_attributes(entity_class, entity_text, domain_context))
+            enhanced_attrs.update(self._high_fallback_attributes(entity_class, entity_text, domain_context))
         
         # Remove old static attributes
         enhanced_attrs.pop('mode', None)
@@ -276,64 +441,37 @@ class AdaptiveMetadataEnhancer:
         
         return enhanced_attrs
     
-    def _adaptive_fallback_attributes(self, entity_class: str, entity_text: str, domain_context: Dict) -> Dict:
-        """Generate semantic attributes using adaptive rules"""
+    def _high_fallback_attributes(self, entity_class: str, entity_text: str, domain_context: Dict) -> Dict:
+        """Generate HIGH richness fallback attributes"""
         
-        domain = domain_context['domain_category']
-        context = domain_context['semantic_context']
-        
-        # Adaptive role assignment based on learned domain
+        # Basic entity type classification
         if 'name' in entity_class.lower():
-            if domain == 'healthcare':
-                role = 'healthcare_subject'
-            elif domain == 'legal':
-                role = 'legal_entity'
-            elif domain == 'financial':
-                role = 'business_entity'
-            else:
-                role = 'person_or_organization'
+            entity_type = 'person'
+        elif any(term in entity_class.lower() for term in ['company', 'organization', 'corp']):
+            entity_type = 'organization'
         elif any(term in entity_class.lower() for term in ['amount', 'value', 'cost', 'price']):
-            role = 'monetary_figure'
-        elif any(term in entity_class.lower() for term in ['date', 'time', 'deadline']):
-            role = 'temporal_reference'
-        elif 'medication' in entity_class.lower():
-            role = 'therapeutic_agent'
-        elif 'contract' in entity_class.lower():
-            role = 'legal_instrument'
+            entity_type = 'amount'
+        elif any(term in entity_class.lower() for term in ['date', 'time']):
+            entity_type = 'date'
+        elif any(term in entity_class.lower() for term in ['address', 'location']):
+            entity_type = 'location'
         else:
-            role = f"{domain}_entity"
+            entity_type = 'concept'
         
-        # Adaptive category based on content
-        if entity_text:
-            if any(char.isdigit() for char in entity_text):
-                if '$' in entity_text or '€' in entity_text:
-                    category = 'monetary_amount'
-                elif 'mg' in entity_text or 'ml' in entity_text:
-                    category = 'medical_measurement'
-                else:
-                    category = 'quantitative_data'
-            else:
-                category = 'categorical_identifier'
-        else:
-            category = 'missing_data'
+        # Simple related entities (just neighboring entity classes)
+        related_entities = []
         
-        # Adaptive significance
-        if context == 'contractual_relationships':
-            significance = 'contractual_obligation'
-        elif context == 'patient_care':
-            significance = 'clinical_information'
-        elif context == 'financial_transactions':
-            significance = 'financial_data'
-        else:
-            significance = 'extracted_information'
+        # Basic relationship types
+        relationship_types = ['related_to']
+        
+        # Simple semantic context
+        context = domain_context.get('semantic_context', 'information_extraction')
         
         return {
-            'functional_role': role,
-            'semantic_category': category,
-            'contextual_significance': significance,
-            'inferred_domain': domain,
-            'semantic_context': context,
-            'inference_confidence': domain_context.get('confidence_score', 1)
+            'entity_type': entity_type,
+            'related_entities': related_entities,
+            'relationship_types': relationship_types,
+            'semantic_context': context
         }
     
     async def _add_adaptive_relationships(self, extractions: List[Dict], domain_context: Dict) -> List[Dict]:
@@ -443,12 +581,18 @@ class AdaptiveMetadataEnhancer:
         }
 
 
-async def enhance_extraction_metadata_adaptive(extractions: List[Dict], document_schema: Dict = None) -> List[Dict]:
-    """Main function for adaptive metadata enhancement (async)"""
-    print(f"🧠 [ADAPTIVE] Starting async enhancement for {len(extractions)} extractions")
-    enhancer = AdaptiveMetadataEnhancer()
+async def enhance_extraction_metadata_adaptive(
+    extractions: List[Dict], 
+    document_schema: Dict = None, 
+    richness_level: MetadataRichness = MetadataRichness.MEDIUM
+) -> List[Dict]:
+    """Main function for adaptive metadata enhancement with configurable richness (async)"""
+    print(f"🧠 [ADAPTIVE] Starting {richness_level.value} richness enhancement for {len(extractions)} extractions")
+    
+    enhancer = AdaptiveMetadataEnhancer(richness_level)
     enhanced = await enhancer.enhance_extractions(extractions, document_schema)
-    print(f"🧠 [ADAPTIVE] Enhanced {len(enhanced)} extractions")
+    
+    print(f"🧠 [ADAPTIVE] Enhanced {len(enhanced)} extractions at {richness_level.value} level")
     if enhanced:
         sample_attrs = enhanced[0].get('attributes', {})
         print(f"🧠 [ADAPTIVE] Sample enhanced attributes: {list(sample_attrs.keys())}")

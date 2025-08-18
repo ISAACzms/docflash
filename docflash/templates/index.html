@@ -27,7 +27,6 @@
         }
 
         [data-theme="dark"] {
-            /* Dark theme colors (ChatGPT style) */
             --bg-primary: #212121;
             --bg-secondary: #2f2f2f;
             --bg-tertiary: #404040;
@@ -218,6 +217,47 @@
             background: var(--bg-tertiary);
             border-color: var(--accent-blue);
             transform: scale(1.02);
+        }
+
+        /* Metadata Richness Slider Styles */
+        .metadata-richness-container {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--border-light);
+        }
+
+        .form-range {
+            height: 8px;
+            background: var(--bg-tertiary);
+        }
+
+        .form-range::-webkit-slider-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 2px 4px var(--shadow-light);
+        }
+
+        .form-range::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 2px 4px var(--shadow-light);
+        }
+
+        .richness-label {
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .richness-label.active {
+            color: var(--accent-blue) !important;
+            font-weight: 600;
         }
 
         .btn {
@@ -533,6 +573,33 @@
                                 <i class="fas fa-lightbulb me-1"></i>
                                 <span id="domainHelpText">Select a domain to leverage patterns from similar document types for smarter example generation.</span>
                             </small>
+                        </div>
+
+                        <!-- Metadata Richness Level Section -->
+                        <div class="mb-4">
+                            <label for="metadataRichness" class="form-label fw-bold d-flex align-items-center">
+                                Metadata Enhancement Level:
+                                <button type="button" class="btn btn-sm btn-outline-info ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Controls how much semantic metadata is added to extractions. None: Fastest, no enhancement. Low: Basic entity types. Medium: Entity types + related entities. High: Full semantic analysis + relationships.">
+                                    <i class="fas fa-question-circle"></i>
+                                </button>
+                            </label>
+                            <div class="metadata-richness-container">
+                                <input type="range" class="form-range" id="metadataRichness" min="0" max="3" value="2" oninput="updateMetadataRichnessDisplay()">
+                                <div class="d-flex justify-content-between mt-2">
+                                    <small class="text-muted richness-label" data-level="0">None</small>
+                                    <small class="text-muted richness-label" data-level="1">Low</small>
+                                    <small class="text-muted richness-label" data-level="2">Medium</small>
+                                    <small class="text-muted richness-label" data-level="3">High</small>
+                                </div>
+                                <div class="mt-2">
+                                    <span class="badge bg-primary" id="richnessLevel">Medium</span>
+                                    <span class="text-muted ms-2" id="richnessDescription">Domain classification and functional roles</span>
+                                </div>
+                                <small class="text-muted mt-1 d-block">
+                                    <i class="fas fa-zap me-1"></i>
+                                    <span id="richnessPerformance">Balanced speed and insight</span>
+                                </small>
+                            </div>
                         </div>
 
                         <!-- PDF Upload Section -->
@@ -1734,6 +1801,62 @@
             }
         }
 
+        // Metadata Richness Slider Functions
+        function updateMetadataRichnessDisplay() {
+            const slider = document.getElementById('metadataRichness');
+            const value = parseInt(slider.value);
+            const levelSpan = document.getElementById('richnessLevel');
+            const descriptionSpan = document.getElementById('richnessDescription');
+            const performanceSpan = document.getElementById('richnessPerformance');
+            
+            // Update labels highlighting
+            document.querySelectorAll('.richness-label').forEach(label => {
+                label.classList.remove('active');
+            });
+            document.querySelector(`[data-level="${value}"]`).classList.add('active');
+            
+            // Update display based on value
+            const levels = [
+                {
+                    name: 'None',
+                    description: 'No metadata enhancement',
+                    performance: 'Maximum speed, minimal insight',
+                    color: 'bg-secondary'
+                },
+                {
+                    name: 'Low', 
+                    description: 'Basic entity types only',
+                    performance: 'Fast processing, basic categorization',
+                    color: 'bg-success'
+                },
+                {
+                    name: 'Medium',
+                    description: 'Entity types + related entities',
+                    performance: 'Balanced speed and insight',
+                    color: 'bg-primary'
+                },
+                {
+                    name: 'High',
+                    description: 'Full semantic analysis + relationships',
+                    performance: 'Maximum insight, slower processing',
+                    color: 'bg-warning'
+                }
+            ];
+            
+            const currentLevel = levels[value];
+            levelSpan.className = `badge ${currentLevel.color}`;
+            levelSpan.textContent = currentLevel.name;
+            descriptionSpan.textContent = currentLevel.description;
+            performanceSpan.textContent = currentLevel.performance;
+        }
+
+        function getMetadataRichnessValue() {
+            const slider = document.getElementById('metadataRichness');
+            const value = parseInt(slider.value);
+            const levels = ['none', 'low', 'medium', 'high'];
+            return levels[value];
+        }
+
         function validateDomainSelection() {
             const domainSelect = document.getElementById('domainSelect');
             const selectedDomain = domainSelect.value;
@@ -1896,7 +2019,8 @@
                         output_schema: parsedOutputSchema,
                         document_class: documentClass,  // For RL feedback tracking
                         domain_name: selectedDomain || null,
-                        additional_instructions: additionalInstructions
+                        additional_instructions: additionalInstructions,
+                        metadata_richness: getMetadataRichnessValue()  // Include richness level
                     })
                 });
 
@@ -1971,6 +2095,9 @@
                 } else {
                     console.log('📋 [RL] No current session master feedback, backend will load accumulated feedback');
                 }
+                
+                // Include metadata richness level
+                requestBody.metadata_richness = getMetadataRichnessValue();
                 
                 console.log('📋„ [RL] Backend will load all accumulated feedback for document class:', documentClass);
 
@@ -2088,7 +2215,8 @@
                         output_schema: parsedOutputSchema,
                         extraction_passes: extractionPasses,
                         max_workers: maxWorkers,
-                        max_char_buffer: maxCharBuffer
+                        max_char_buffer: maxCharBuffer,
+                        metadata_richness: getMetadataRichnessValue()  // Include richness level
                     })
                 });
 

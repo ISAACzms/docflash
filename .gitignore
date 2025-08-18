@@ -209,7 +209,6 @@ __marimo__/
 # Doc Flash specific
 uploads/
 outputs/
-*.pdf
 *.txt
 !requirements.txt
 *.docx
